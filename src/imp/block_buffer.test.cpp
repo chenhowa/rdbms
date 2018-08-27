@@ -14,6 +14,43 @@ char* makeBuffer(int size, char value) {
     return buffer;
 }
 
+bool verifyFilesAreSame(const char* filename1, const char* filename2) {
+    std::ifstream input_1(filename1, std::ifstream::binary);
+    std::ifstream input_2(filename2, std::ifstream::binary);
+    
+    if(!input_1) {
+        perror("input 1 not opened correctly");
+    }
+    
+    if(!input_2) {
+        perror("input 2 not opened correctly");
+    }
+    
+    char val_1;
+    char val_2;
+    
+    while(input_1 && input_2) {
+        val_1 = input_1.get();
+        printf("%i", val_1);
+        val_2 = input_2.get();
+        printf("%i\n", val_2);
+        
+        if(val_1 != val_2) {
+            perror("values not equal\n");
+            printf("val_1: %i val_2: %i\n", val_1, val_2);
+            return false;
+        }
+        
+        if( (input_1 && !input_2) || (!input_1 && input_2) ) {
+            perror("streams not in same state");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
 TEST_CASE("BlockBuffer: Read from RAM ... ") {
     int buf_size = 100;
     BlockBuffer buffer(buf_size);
@@ -148,7 +185,7 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
 
 TEST_CASE("BlockBuffer: File Reading ... ") {
     // Create test file containing only the capital alphabet letters.
-    char filename[] = "./test_files/test_file.txt";
+    char filename[] = "./test_files/test_read_file.txt";
     std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
     if(!test_file) {
         REQUIRE(1 == 2);
@@ -156,7 +193,7 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
     int ascii_A = 65;
     int alphabet_length = 27;
     int* test_nums = new int[alphabet_length];
-    for(int i = 0; i < 27; i++) {
+    for(int i = 0; i < alphabet_length; i++) {
         test_nums[i] = ascii_A + i;
     }
     
@@ -204,44 +241,76 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
     }
 }
 
-
-/*
-
-TEST_CASE("BlockBuffer: empty buffer, read from full file") {
-    // First, write the desired file.
-    int fd = write_buffer_to_file(test_buf);
+TEST_CASE("BlockBuffer: File Writing ... ") {
+    // Create file with a 10 "A" characters in it.
+    char filename[] = "./test_files/test_write_file.txt";
+    std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
+    if(!test_file) {
+        REQUIRE(1 == 2);
+    }
+    int ascii_A = 65;
+    int length = 5;
+    int* test_nums = new int[length];
+    for(int i = 0; i < length; i++) {
+        test_nums[i] = ascii_A;
+    }
     
-    //Read the desired file in and begin testing.
-    int buf_size = 100;
+    test_file.write((char*)test_nums, length*sizeof(int));
+    test_file.close();
+    
+    // Prepare to write to the file.
+    std::ofstream write_file(filename, std::ofstream::binary | std::ofstream::ate | std::ofstream::in);
+    if(!write_file) {
+        perror("Problem opening file for write\n");
+        REQUIRE(1 == 2);
+    }
+    
+    int buf_size = 10;
     BlockBuffer buffer(buf_size);
-    buffer.read(fd);
     
-    REQUIRE(buffer.isFull());
-    REQUIRE(buffer.isCount(buf_size));
-    REQUIRE(!buffer.isEmpty());
-    REQUIRE(buffer.isStart(0));
-    REQUIRE(buffer.isEnd(0));
-}
-
-TEST_CASE("BlockBuffer: empty buffer, read from half-full file") {
-    // First, write the desired file.
-    int fd = write_buffer_to_file(test_buf);
-    
-    //Read the desired file in and begin testing.
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    
-    REQUIRE(buffer.isCount(0));
     REQUIRE(buffer.isEmpty());
     
-    buffer.read(fd);
-    REQUIRE(!buffer.isFull());
-    REQUIRE(buffer.isCount(buf_size / 2));
-    REQUIRE(!buffer.isEmpty());
-    REQUIRE(buffer.isStart(buf_size / 2));
-    REQUIRE(buffer.isEnd(buf_size / 2));
-    REQUIRE(buffer.bufferEquals(buf_size / 2, result))
+    SECTION("full => empty") {
+        int src_size = buf_size;
+        char* src = makeBuffer(src_size, 'B');
+        buffer.read(src_size, src);
+        
+        REQUIRE(buffer.isFull());
+        
+        buffer.write(write_file);
+        
+        REQUIRE(buffer.isEmpty());
+        
+        write_file.close();
+        
+        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_full_write.txt"));
+        
+        // TODO: VERIFY THE FILE CONTENTS ARE CORRECT - Howard Chen
+    }
+    
+    SECTION("half-full => empty") {
+        int src_size = buf_size / 2;
+        char *src = makeBuffer(src_size, 'B');
+        buffer.read(src_size, src);
+        
+        REQUIRE(!buffer.isFull());
+        REQUIRE(!buffer.isEmpty());
+        REQUIRE(buffer.isCount(src_size));
+        
+        buffer.write(write_file);
+        
+        REQUIRE(buffer.isEmpty());
+        
+        write_file.close();
+        
+        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt"));
+        
+        // TODO: VERIFY THE FILE CONTENTS ARE CORRECT - Howard Chen
+    }
 }
+
+
+/*
 
 TEST_CASE("BlockBuffer: full buffer, write to file") {
     // First, open file to write to.

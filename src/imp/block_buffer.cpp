@@ -51,30 +51,32 @@ int BlockBuffer::write(int num_bytes, char* dest) {
     return bytes_to_write;
 }
 
-// TODO: FILE MUST BE IN BINARY WRITE MODE.
-// HOW TO ENFORCE THAT?
-// ALSO MAKE SURE fstream is OPEN
-int BlockBuffer::write(ofstream &f) {
-    // Can I implement a B+ tree by using a sequential
-    // file layout? How would I reference the table the
-    // B tree refers to? Maybe I still have to reference
-    // table files in the disk system BY NAME???
-    
-    // I will let the file system handle the linked
-    // list of blocks.
-    
-    // But as for this. Write all the bytes to the
-    // file stream.
+// This function attempts to write up to a block of bytes
+// to the output file associated with the ofstream.
+// @ pre - ofstream is opened to a valid file
+// @ pre - ofstream is in binary and read mode.
+// @ pre - ofstream has no error flags.
+// @ post - ofstream will be written by X bytes, where X is 
+//          the size of the BlockBuffer
+// @ post - BlockBuffer will be empty.
+// @ return - returns number of bytes written.
+int BlockBuffer::write(ofstream &out) {
+    assert(out.is_open());
+    assert(out.good());
     int bytes_written = 0;
     
     while(count > 0) {
-        f.put(buffer[start_byte]);
+        out.put(buffer[start_byte]);
         count -= 1;
         start_byte = (start_byte + 1) % max_bytes;
     }
     
-    assert(start_byte == end_byte);
-    assert(count == 0);
+    if(out) {
+        assert(start_byte == end_byte);
+        assert(count == 0);
+    } else {
+        throw "Output file is in invalid condition";
+    }
     
     return bytes_written;
 }
@@ -105,14 +107,15 @@ int BlockBuffer::read(int num_bytes, char* src) {
 //      1. At end of file
 //      2. Advanced by X bytes, where X is the number of bytes the BlockBuffer
 //          read to be full
+// @ post - BlockBuffer will be full.
 // @ return - returns number of bytes read.
 int BlockBuffer::read(ifstream &in) {
     assert(in.is_open());
     assert(in.good());
     
-    // TODO MAKE SURE TO EXIT ON EOF.
     int bytes_read = 0;
     
+    // Read until full, or until the file ends.
     while(count < max_bytes && in) {
         buffer[end_byte] = (char)in.get();
         count++;
@@ -120,8 +123,10 @@ int BlockBuffer::read(ifstream &in) {
         bytes_read += 1;
     }
     
-    assert(start_byte == end_byte);
-    assert(count == max_bytes);
+    if(in) {
+        assert(start_byte == end_byte);
+        assert(count == max_bytes);
+    }
     
     return bytes_read;
 }
