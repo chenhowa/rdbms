@@ -4,13 +4,13 @@
 #include "block_buffer.hpp"
 #include "catch.hpp"
 #include <cstring>
+#include <string>
 
 char* makeBuffer(int size, char value) {
     char* buffer = new char[size];
     memset(buffer, value, size);
     return buffer;
 }
-
 
 TEST_CASE("BlockBuffer: Read from RAM ... ") {
     int buf_size = 100;
@@ -50,23 +50,28 @@ TEST_CASE("BlockBuffer: Read from RAM ... ") {
     }
 }
 
-TEST_CASE("BlockBuffer: write some bytes") {
+TEST_CASE("BlockBuffer: Write to RAM ... ") {
     int buf_size = 100;
     BlockBuffer buffer(buf_size);
-    int src_size = 100;
-    char* src = new char[src_size];
-    memset(src, 'c', src_size);
-    buffer.read(src_size, src);
+    char* init_data = makeBuffer(buf_size, 'c');
+    buffer.read(buf_size, init_data);
     
-    int write_size = 99;
-    int res_size = buf_size - write_size;
-    char* result = new char[res_size];
-    memset(result, 'c', res_size);
-    int bytes_written = buffer.write(write_size, src);
-    REQUIRE(bytes_written == write_size);
-    REQUIRE(buffer.isCount(res_size));
-    REQUIRE(buffer.bufferEquals(res_size, result));
+    SECTION("just a few bytes") {
+        int num_bytes_to_write = buf_size - 1;
+        int expected_size = buf_size - num_bytes_to_write;
+        char* expected = makeBuffer(expected_size, 'c');
+        char* dest = makeBuffer(buf_size, '\0');
+        int bytes_written = buffer.write(num_bytes_to_write, dest);
+        
+        std::string written_expected(num_bytes_to_write, 'c');
+        
+        REQUIRE(bytes_written == num_bytes_to_write);
+        REQUIRE(buffer.isCount(expected_size));
+        REQUIRE(buffer.bufferEquals(expected_size, expected));
+        REQUIRE(strcmp(dest, written_expected.c_str()) == 0);
+    }
 }
+
 
 TEST_CASE("BlockBuffer: write all bytes") {
     int buf_size = 100;
