@@ -70,23 +70,21 @@ TEST_CASE("BlockBuffer: Write to RAM ... ") {
         REQUIRE(buffer.bufferEquals(expected_size, expected));
         REQUIRE(strcmp(dest, written_expected.c_str()) == 0);
     }
+    
+    SECTION("all bytes in buffer") {
+        int num_bytes_to_write = buf_size;
+        char* dest = makeBuffer(buf_size + 1, '\0');
+        int bytes_written = buffer.write(num_bytes_to_write, dest);
+        
+        std::string written_expected(num_bytes_to_write, 'c');
+        
+        REQUIRE(buffer.isEmpty());
+        REQUIRE(bytes_written == buf_size);
+        REQUIRE(memcmp(init_data, dest, buf_size) == 0);
+        REQUIRE(strcmp(dest, written_expected.c_str()) == 0);
+    }
 }
 
-
-TEST_CASE("BlockBuffer: write all bytes") {
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    char* src = new char[buf_size];
-    memset(src, 'd', buf_size);
-    buffer.read(buf_size, src);
-    
-    char* result = new char[buf_size];
-    
-    int bytes_written = buffer.write(buf_size, result);
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(bytes_written == buf_size);
-    REQUIRE(memcmp(src, result, buf_size) == 0);
-}
 
 TEST_CASE("BlockBuffer: write too many bytes") {
     int buf_size = 100;
