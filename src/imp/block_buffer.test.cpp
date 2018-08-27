@@ -42,36 +42,6 @@ TEST_CASE("BlockBuffer: Read from RAM ... ") {
     }
 }
 
-/*
-TEST_CASE("BlockBuffer: read bytes with plenty of space") {
-    int buf_size = 101;
-    BlockBuffer buffer(buf_size);
-    int src_size = 100;
-    char* src = new char[src_size];
-    memset(src, 'b', src_size);
-    int bytes_read = buffer.read(src_size, src);
-    
-    REQUIRE(bytes_read == src_size);
-    REQUIRE(buffer.isCount(src_size));
-    REQUIRE(buffer.bufferEquals(src_size, src));
-}*/
-
-/*
-TEST_CASE("BlockBuffer: read bytes with exact space") {
-    int size = 100;
-    BlockBuffer buffer(size);
-    char* src = new char[size];
-    memset(src, 'a', size);
-    int bytes_read = buffer.read(size, src);
-
-    REQUIRE(bytes_read == size);
-    REQUIRE(buffer.isCount(size));
-    REQUIRE(buffer.isFull());
-    REQUIRE(buffer.bufferEquals(size, src));
-
-}
-*/
-
 TEST_CASE("BlockBuffer: read bytes with insufficient space") {
     int buf_size = 100;
     BlockBuffer buffer(buf_size);
