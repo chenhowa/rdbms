@@ -5,6 +5,8 @@
 #include "catch.hpp"
 #include <cstring>
 #include <string>
+#include <cstdio> // for std::tmpnam
+#include <stdio.h>
 
 char* makeBuffer(int size, char value) {
     char* buffer = new char[size];
@@ -127,47 +129,58 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
         REQUIRE(buffer.isCount(buf_size));
         REQUIRE(buffer.isStart(init_size));
         REQUIRE(buffer.isEnd(init_size));
-    }
-    
-    SECTION("half-full => empty => full => half-full") {
         
+        SECTION("check parent section's conditions") {
+            REQUIRE(1 == 1);
+        }
+        
+        SECTION(" parent section: => half-full") {
+            //write to half-full
+            buffer.write(init_size, dest);
+            REQUIRE(!buffer.isFull());
+            REQUIRE(!buffer.isEmpty());
+            REQUIRE(buffer.isCount(buf_size / 2));
+            REQUIRE(buffer.isStart(0));
+            REQUIRE(buffer.isEnd(init_size));
+        }
     }
 }
 
-TEST_CASE("BlockBuffer: read half-full,"
-            " write to empty, read to full,"
-            " write to half-full") {
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    int src_size = buf_size / 2;
-    char* src = new char[src_size];
-    memset(src, 'a', src_size);
-    buffer.read(src_size, src);
+TEST_CASE("BlockBuffer: File Reading ... ") {
+    // Create test file containing only the capital alphabet letters.
+    char* filename = "./test_files/test_file.txt";
+    std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
+    if(!test_file) {
+        REQUIRE(1 == 2);
+    }
+    int ascii_A = 65;
+    int alphabet_length = 27;
+    int* test_nums = new int[alphabet_length];
+    for(int i = 0; i < 27; i++) {
+        test_nums[i] = ascii_A + i;
+    }
     
-    char* result = new char[buf_size];
-    int bytes_written = buffer.write(src_size, result);
+    test_file.write((char*)test_nums, alphabet_length*sizeof(int));
+    test_file.close();
     
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(buffer.isCount(0));
-    REQUIRE(buffer.isStart(src_size));
-    REQUIRE(buffer.isEnd(src_size));
-    REQUIRE(bytes_written == src_size);
-    REQUIRE(memcmp(src, result, src_size) == 0);
-    
-    buffer.read(src_size, src);
-    buffer.read(src_size, src);
-    REQUIRE(buffer.isFull());
-    REQUIRE(buffer.isCount(buf_size));
-    REQUIRE(buffer.isStart(src_size));
-    REQUIRE(buffer.isEnd(src_size));
-    
-    bytes_written = buffer.write(src_size, result);
-    REQUIRE(!buffer.isFull());
-    REQUIRE(!buffer.isEmpty());
-    REQUIRE(buffer.isCount(buf_size / 2));
-    REQUIRE(buffer.isStart(0));
-    REQUIRE(buffer.isEnd(src_size));
+    SECTION("read ... ") {
+        int buf_size = 20;
+        BlockBuffer buffer(buf_size);
+        buffer.setFile(filename);
+        
+        REQUIRE(buffer.isEmpty());
+        
+        SECTION("empty => full") {
+            
+        }
+        
+        SECTION("half-full => full") {
+            
+        }
+    }
+
 }
+
 
 /*
 

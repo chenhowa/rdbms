@@ -5,6 +5,7 @@
 
 #include <string>
 #include <memory>
+#include <fstream>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ private:
     int count;
     int max_bytes;
     unique_ptr<char[]> buffer;
+    fstream file;
 public:
     BlockBuffer(int blocksize);
 
@@ -30,6 +32,9 @@ public:
     bool isStart(int index);
     bool isEnd(int index);
     bool isCount(int index);
+    void setFile(char* filename);
+    bool isFileReady();
+    bool isFileEmpty();
 };
 
 #endif //BLOCK_BUFFER_HPP
