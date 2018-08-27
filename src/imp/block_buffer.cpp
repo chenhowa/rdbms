@@ -151,19 +151,3 @@ bool BlockBuffer::isCount(int c) {
     return c == this->count;
 }
 
-void BlockBuffer::setFile(char* filename) {
-    this->file.close();
-    this->file.clear();
-    this->file.open(filename, std::fstream::in | std::fstream::out | std::fstream::binary);
-    if(!this->file) {
-        perror("Error opening file\n");
-    }
-}
-
-bool BlockBuffer::isFileReady() {
-    return this->file.good();
-}
-
-bool BlockBuffer::isFileEmpty() {
-    return this->file.eof();
-}

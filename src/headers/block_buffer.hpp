@@ -32,9 +32,6 @@ public:
     bool isStart(int index);
     bool isEnd(int index);
     bool isCount(int index);
-    void setFile(char* filename);
-    bool isFileReady();
-    bool isFileEmpty();
 };
 
 #endif //BLOCK_BUFFER_HPP
