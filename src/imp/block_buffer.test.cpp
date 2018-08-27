@@ -83,54 +83,57 @@ TEST_CASE("BlockBuffer: Write to RAM ... ") {
         REQUIRE(memcmp(init_data, dest, buf_size) == 0);
         REQUIRE(strcmp(dest, written_expected.c_str()) == 0);
     }
+    
+    SECTION("way too many bytes") {
+        int num_bytes_to_write = buf_size + 5;
+        char* dest = makeBuffer(num_bytes_to_write + 1, '\0');
+        int bytes_written = buffer.write(num_bytes_to_write, dest);
+        
+        std::string written_expected(buf_size, 'c');
+        
+        REQUIRE(buffer.isEmpty());
+        REQUIRE(bytes_written == buf_size);
+        REQUIRE(memcmp(init_data, dest, buf_size) == 0);
+        REQUIRE(strcmp(dest, written_expected.c_str()) == 0);
+    }
 }
 
 
-TEST_CASE("BlockBuffer: write too many bytes") {
+TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
+    // Create a half-full BlockBuffer
     int buf_size = 100;
     BlockBuffer buffer(buf_size);
-    char* src = new char[buf_size];
-    memset(src, 'g', 10);
-    memset(src + 10, 'e', buf_size - 10);
-    buffer.read(buf_size, src);
+    int init_size = buf_size / 2;
+    char* init_data = makeBuffer(init_size, 'a');
+    buffer.read(init_size, init_data);
     
-    int write_size = 101;
-    char* result = new char[write_size];
-    int bytes_written = buffer.write(write_size, result);
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(bytes_written == buf_size);
-    REQUIRE(memcmp(src, result, buf_size) == 0);
+    
+    SECTION("half-full => empty => full") {
+        
+        // write to empty
+        char* dest = makeBuffer(buf_size + 1, '\0');
+        int bytes_written = buffer.write(init_size, dest);
+        REQUIRE(buffer.isEmpty());
+        REQUIRE(buffer.isCount(0));
+        REQUIRE(buffer.isStart(init_size));
+        REQUIRE(buffer.isEnd(init_size));
+        REQUIRE(bytes_written == init_size);
+        REQUIRE(memcmp(init_data, dest, init_size) == 0);
+        
+        // read to full
+        buffer.read(init_size, init_data);
+        buffer.read(init_size, init_data);
+        REQUIRE(buffer.isFull());
+        REQUIRE(buffer.isCount(buf_size));
+        REQUIRE(buffer.isStart(init_size));
+        REQUIRE(buffer.isEnd(init_size));
+    }
+    
+    SECTION("half-full => empty => full => half-full") {
+        
+    }
 }
 
-TEST_CASE("BlockBuffer: read half-full,"
-            " write to empty, read to full") {
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    int src_size = buf_size / 2;
-    char* src = new char[src_size];
-    memset(src, 'a', src_size);
-    buffer.read(src_size, src);
-    
-    char* result = new char[buf_size];
-    int bytes_written = buffer.write(src_size, result);
-    
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(buffer.isCount(0));
-    REQUIRE(buffer.isStart(src_size));
-    REQUIRE(buffer.isEnd(src_size));
-    REQUIRE(bytes_written == src_size);
-    REQUIRE(memcmp(src, result, src_size) == 0);
-    
-    buffer.read(src_size, src);
-    buffer.read(src_size, src);
-    REQUIRE(buffer.isFull());
-    REQUIRE(buffer.isCount(buf_size));
-    REQUIRE(buffer.isStart(src_size));
-    REQUIRE(buffer.isEnd(src_size));
-    
-}
-
-/*
 TEST_CASE("BlockBuffer: read half-full,"
             " write to empty, read to full,"
             " write to half-full") {
@@ -165,6 +168,8 @@ TEST_CASE("BlockBuffer: read half-full,"
     REQUIRE(buffer.isStart(0));
     REQUIRE(buffer.isEnd(src_size));
 }
+
+/*
 
 TEST_CASE("BlockBuffer: empty buffer, read from full file") {
     // First, write the desired file.
