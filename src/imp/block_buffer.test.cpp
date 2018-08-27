@@ -38,25 +38,16 @@ TEST_CASE("BlockBuffer: Read from RAM ... ") {
     }
     
     SECTION("bytes - too many for BlockBuffer") {
+        int src_size = buf_size + 1;
+        char* src = makeBuffer(src_size, 'b');
+        int bytes_read = buffer.read(src_size, src);
+        char* expected = makeBuffer(buf_size, 'b');
         
+        REQUIRE(buffer.isCount(buf_size));
+        REQUIRE(buffer.isFull());
+        REQUIRE(buffer.bufferEquals(buf_size, expected));
+        REQUIRE(bytes_read == buf_size);
     }
-}
-
-TEST_CASE("BlockBuffer: read bytes with insufficient space") {
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    
-    int src_size = 101;
-    char* src = new char[src_size];
-    memset(src, 'b', src_size);
-    int bytes_read = buffer.read(src_size, src);
-    
-    char* result = new char[buf_size];
-    memcpy(result, src, buf_size);
-    REQUIRE(buffer.isCount(buf_size));
-    REQUIRE(buffer.isFull());
-    REQUIRE(buffer.bufferEquals(buf_size, result));
-    REQUIRE(bytes_read == buf_size);
 }
 
 TEST_CASE("BlockBuffer: write some bytes") {
