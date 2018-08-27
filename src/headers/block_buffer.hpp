@@ -17,16 +17,15 @@ private:
     int count;
     int max_bytes;
     unique_ptr<char[]> buffer;
-    fstream file;
 public:
     BlockBuffer(int blocksize);
 
     bool isEmpty();
     bool isFull();
     int write(int num_bytes, char* dest);
-    int write(ofstream f);
+    int write(ofstream &f);
     int read(int num_bytes, char* src);
-    int read(ifstream f);
+    int read(ifstream &f);
     bool bufferEquals(int num_bytes, char* src);
     void print();
     bool isStart(int index);

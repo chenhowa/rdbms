@@ -26,7 +26,7 @@ BlockBuffer::BlockBuffer(int blocksize) :
 }
 
 bool BlockBuffer::isEmpty() {
-    return start_byte == end_byte;
+    return start_byte == end_byte && count == 0;
 }
 
 
@@ -54,7 +54,7 @@ int BlockBuffer::write(int num_bytes, char* dest) {
 // TODO: FILE MUST BE IN BINARY WRITE MODE.
 // HOW TO ENFORCE THAT?
 // ALSO MAKE SURE fstream is OPEN
-int BlockBuffer::write(ofstream f) {
+int BlockBuffer::write(ofstream &f) {
     // Can I implement a B+ tree by using a sequential
     // file layout? How would I reference the table the
     // B tree refers to? Maybe I still have to reference
@@ -96,21 +96,31 @@ int BlockBuffer::read(int num_bytes, char* src) {
     return bytes_to_read;
 }
 
-// TODO:  FILE MUST BE IN BINARY READ MODE.
-// HOW TO ENFORCE THAT?
-// ALSO MAKE SURE fstream is OPEN
-int BlockBuffer::read(ifstream in) {
+// This function attempts to read up to a block of bytes
+// from the input file associated with the ifstream.
+// @ pre - ifstream is opened to a valid file
+// @ pre - ifstream is in binary and read mode.
+// @ pre - ifstream has no error flags.
+// @ post - ifstream will be in one of 2 conditions
+//      1. At end of file
+//      2. Advanced by X bytes, where X is the number of bytes the BlockBuffer
+//          read to be full
+// @ return - returns number of bytes read.
+int BlockBuffer::read(ifstream &in) {
+    assert(in.is_open());
+    assert(in.good());
+    
     // TODO MAKE SURE TO EXIT ON EOF.
     int bytes_read = 0;
     
     while(count < max_bytes && in) {
-        buffer[end_byte] = in.get();
+        buffer[end_byte] = (char)in.get();
         count++;
         end_byte = (end_byte + 1) % max_bytes;
         bytes_read += 1;
     }
     
-    assert(start_byte = end_byte);
+    assert(start_byte == end_byte);
     assert(count == max_bytes);
     
     return bytes_read;

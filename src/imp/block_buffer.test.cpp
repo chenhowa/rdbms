@@ -148,7 +148,7 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
 
 TEST_CASE("BlockBuffer: File Reading ... ") {
     // Create test file containing only the capital alphabet letters.
-    char* filename = "./test_files/test_file.txt";
+    char filename[] = "./test_files/test_file.txt";
     std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
     if(!test_file) {
         REQUIRE(1 == 2);
@@ -166,19 +166,42 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
     SECTION("read ... ") {
         int buf_size = 20;
         BlockBuffer buffer(buf_size);
-        buffer.setFile(filename);
+        
+        std::ifstream read_file(filename, std::ofstream::binary);
+        if(!read_file) {
+            perror("Problem opening file for read\n");
+            REQUIRE(1 == 2);
+        }
         
         REQUIRE(buffer.isEmpty());
         
         SECTION("empty => full") {
-            
+            int bytes_read = buffer.read(read_file);
+            REQUIRE(buffer.isFull());
+            REQUIRE(buffer.isCount(buf_size));
+            REQUIRE(buffer.isStart(0));
+            REQUIRE(buffer.isEnd(0));
+            REQUIRE(!buffer.isEmpty());
+            REQUIRE(bytes_read == buf_size);
         }
         
         SECTION("half-full => full") {
+            int src_size = buf_size / 2;
+            char* src = makeBuffer(src_size, 'a');
+            buffer.read(src_size, src);
             
+            int bytes_read = buffer.read(read_file);
+            
+            REQUIRE(buffer.isFull());
+            REQUIRE(buffer.isCount(buf_size));
+            REQUIRE(buffer.isStart(0));
+            REQUIRE(buffer.isEnd(0));
+            REQUIRE(!buffer.isEmpty());
+            REQUIRE(bytes_read == buf_size / 2);
         }
+        
+        read_file.close();
     }
-
 }
 
 
