@@ -14,7 +14,8 @@ char* makeBuffer(int size, char value) {
     return buffer;
 }
 
-bool verifyFilesAreSame(const char* filename1, const char* filename2) {
+bool verifyFilesAreSame(const char* filename1, const char* filename2, const char* message) {
+    // printf("Testing: %s\n", message);
     std::ifstream input_1(filename1, std::ifstream::binary);
     std::ifstream input_2(filename2, std::ifstream::binary);
     
@@ -29,11 +30,15 @@ bool verifyFilesAreSame(const char* filename1, const char* filename2) {
     char val_1;
     char val_2;
     
-    while(input_1 && input_2) {
+    while(input_1 || input_2) {
         val_1 = input_1.get();
-        printf("%i", val_1);
         val_2 = input_2.get();
+        /*
+         * This is more thorough instrumentation to see the values of each file.
+        printf("%i / ", val_1);
         printf("%i\n", val_2);
+        */
+        
         
         if(val_1 != val_2) {
             perror("values not equal\n");
@@ -248,14 +253,20 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
     if(!test_file) {
         REQUIRE(1 == 2);
     }
+    
+    int test_len = 5;
+    char* test_vals = makeBuffer(test_len, 'A');
+    
+    /*
     int ascii_A = 65;
     int length = 5;
-    int* test_nums = new int[length];
+    int* test_nums = new int[length + 1];
     for(int i = 0; i < length; i++) {
         test_nums[i] = ascii_A;
     }
+    */
     
-    test_file.write((char*)test_nums, length*sizeof(int));
+    test_file.write((char*)test_vals, test_len);
     test_file.close();
     
     // Prepare to write to the file.
@@ -283,9 +294,7 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         
         write_file.close();
         
-        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_full_write.txt"));
-        
-        // TODO: VERIFY THE FILE CONTENTS ARE CORRECT - Howard Chen
+        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_full_write.txt", "full => empty"));        
     }
     
     SECTION("half-full => empty") {
@@ -303,9 +312,7 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         
         write_file.close();
         
-        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt"));
-        
-        // TODO: VERIFY THE FILE CONTENTS ARE CORRECT - Howard Chen
+        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt", "half-full => empty"));
     }
 }
 
