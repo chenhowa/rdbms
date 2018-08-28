@@ -21,9 +21,6 @@ FileHasher::FileHasher() {
     for(int i = 0; i < this->_numOutputBuffers; i++) {
         this->output_buffers[i] = new BlockBuffer(this->blocksize);
     }
-    
-    
-
 }
 
 int FileHasher::numOutputBuffers() {
