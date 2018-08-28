@@ -9,22 +9,43 @@
 // USE UNIQUE POINTERS. REMOVE ALLOCATION BUGS
 // FROM YOUR PROGRAM.
 
-FileHasher::FileHasher() {
+int calcBlockSize() {
     struct stat s;
     stat("/", &s);
-    this->blocksize = (int)(s.st_blksize);
+    printf("Blocksize: %i\n", (int)s.st_blksize);
+    return (int)(s.st_blksize);
+}
+
+FileHasher::FileHasher() {
     
-    this->input_buffer = new BlockBuffer(this->blocksize);
-    this->_numOutputBuffers = this->numOutputBuffers();
-    this->output_buffers = new BlockBuffer[this->_numOutputBuffers];
+}
+
+FileHasher::FileHasher(int num_outputs) {
+    this->blocksize = calcBlockSize();
+    
+    this->input.reset(new BlockBuffer(this->blocksize) );
+    this->_numOutputBuffers = num_outputs;
+    this->outputs.reset(new unique_ptr<BlockBuffer>[this->_numOutputBuffers]);
     
     for(int i = 0; i < this->_numOutputBuffers; i++) {
-        this->output_buffers[i] = new BlockBuffer(this->blocksize);
+        this->outputs[i].reset(new BlockBuffer(this->blocksize) );
     }
 }
 
+FileHasher::FileHasher(int num_outputs, int blocksize) {
+    this->blocksize = blocksize;
+    this->input.reset(new BlockBuffer(this->blocksize) );
+    this->_numOutputBuffers = num_outputs;
+    this->outputs.reset( new unique_ptr<BlockBuffer>[this->_numOutputBuffers] );
+    
+    for(int i = 0; i < this->_numOutputBuffers; i++) {
+        this->outputs[i].reset( new BlockBuffer(this->blocksize) );
+    }
+    
+}
+
 int FileHasher::numOutputBuffers() {
-    return 15;
+    return this->_numOutputBuffers;
 }
 
 
@@ -33,12 +54,12 @@ int FileHasher::getBlockSize() {
 }
 
 FileHasher::~FileHasher() {
-    delete this->input_buffer;
+    /*delete this->input;
     
     for(int i = 0; i < this->_numOutputBuffers; i++) {
-        delete this->output_buffers[i];
+        delete this->outputs[i];
     }
     
-    delete [] this->output_buffers;
-    
+    delete [] this->outputs;
+    */
 }
