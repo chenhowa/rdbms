@@ -247,7 +247,7 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
 }
 
 TEST_CASE("BlockBuffer: File Writing ... ") {
-    // Create file with a 10 "A" characters in it.
+    // Create file with a starting number of "A" characters in it.
     char filename[] = "./test_files/test_write_file.txt";
     std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
     if(!test_file) {
@@ -313,55 +313,3 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt", "half-full => empty"));
     }
 }
-
-
-/*
-
-TEST_CASE("BlockBuffer: full buffer, write to file") {
-    // First, open file to write to.
-    int fd = open_temp_file_for_write();
-    
-    // Initialize a full buffer.
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    char* src = new char[buf_size];
-    memset(src, 'q', buf_size);
-    buffer.read(buf_size, src);
-    
-    //Write a full buffer to file.
-    buffer.write(fd);
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(!buffer.isFull());
-    REQUIRE(buffer.isCount(0));
-    REQUIRE(buffer.isStart(0));
-    REQUIRE(buffer.isEnd(0));
-    
-    // TODO: Check that file written is correct!
-}
-
-TEST_CASE("BlockBuffer: half-full buffer, write all to file") {
-    // First, open file to write to.
-    int fd = open_temp_file_for_write();
-    
-    // Get half-full buffer.
-    int buf_size = 100;
-    BlockBuffer buffer(buf_size);
-    
-    int src_size = buf_size / 2;
-    char* src = new char[src_size];
-    memset(src, 'b', src_size);
-    buffer.read(src_size, src);
-    
-    REQUIRE(buffer.isCount(src_size));
-    REQUIRE(buffer.bufferEquals(src_size, src));
-    
-    // Write the half-full buffer.
-    buffer.write(fd);
-    REQUIRE(buffer.isCount(0));
-    REQUIRE(buffer.isEmpty());
-    REQUIRE(buffer.isStart(src_size));
-    REQUIRE(buffer.isEnd(src_size));
-    
-    // TODO: Check that file written is correct!
-}
-*/
