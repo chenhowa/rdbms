@@ -257,15 +257,6 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
     int test_len = 5;
     char* test_vals = makeBuffer(test_len, 'A');
     
-    /*
-    int ascii_A = 65;
-    int length = 5;
-    int* test_nums = new int[length + 1];
-    for(int i = 0; i < length; i++) {
-        test_nums[i] = ascii_A;
-    }
-    */
-    
     test_file.write((char*)test_vals, test_len);
     test_file.close();
     
@@ -291,6 +282,10 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         buffer.write(write_file);
         
         REQUIRE(buffer.isEmpty());
+        REQUIRE(!buffer.isFull());
+        REQUIRE(buffer.isCount(0));
+        REQUIRE(buffer.isStart(0));
+        REQUIRE(buffer.isEnd(0));
         
         write_file.close();
         
@@ -309,6 +304,9 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         buffer.write(write_file);
         
         REQUIRE(buffer.isEmpty());
+        REQUIRE(buffer.isCount(0));
+        REQUIRE(buffer.isStart(src_size));
+        REQUIRE(buffer.isEnd(src_size));
         
         write_file.close();
         
