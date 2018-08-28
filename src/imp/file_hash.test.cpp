@@ -15,6 +15,20 @@ TEST_CASE("file hasher initializes correctly with custom"
     REQUIRE(hasher.numOutputBuffers() == num_outputs);
 }
 
-TEST_CASE("") {
+TEST_CASE("file hasher correctly hashes ... ") {
     
+    int blocksize = 20;
+    int num_outputs = 5;
+    FileHasher hasher(num_outputs, blocksize);
+    
+    REQUIRE(hasher.getBlockSize() == blocksize);
+    REQUIRE(hasher.numOutputBuffers() == num_outputs);
+    
+    SECTION("simple file, simple function") {
+        
+    }
+    
+    SECTION("simple file, complex function") {
+        
+    }
 }

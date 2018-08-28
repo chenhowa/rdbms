@@ -4,6 +4,7 @@
 #define FILE_HASH_HPP
 
 #include <string>
+#include <fstream>
 #include "block_buffer.hpp"
 
 using namespace std;
@@ -28,8 +29,10 @@ public:
     FileHasher(int num_outputs, int blocksize);
     int numOutputBuffers();
     int getBlockSize();
-    void hash(int col);
     ~FileHasher();
+    
+    void testHash(char* file);
+
         
 };
 

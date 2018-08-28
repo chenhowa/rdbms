@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fstream>
 
 
 #include "file_hash.hpp"
@@ -55,4 +56,34 @@ int FileHasher::getBlockSize() {
 
 FileHasher::~FileHasher() {
    
+}
+
+void testHash(char* file) {
+    // open the file
+    std::ifstream in(file, std::ifstream::binary);
+    if(!in) {
+        throw "Failure to open input file";
+    }
+    
+    
+    
+    // Read a block into input
+    this->input.read(in);
+    
+    // For every value in the file:
+    char c;
+    int hash_val;
+    while(in) {
+        // Read in a value to input
+        c = (char)in.get();
+
+        // Hash the value.
+        hash_val = ((int)c) %
+    
+        // Based on the hash value, send it to the appropriate
+        // output buffer.
+        
+        // Check if that output buffer is full. If it is
+        // flush it, and then continue.
+    }
 }
