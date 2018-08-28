@@ -188,7 +188,7 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
     }
 }
 
-TEST_CASE("BlockBuffer: File Reading ... ") {
+TEST_CASE("BlockBuffer: File Reading from file smaller than buffer ... ") {
     // Create test file containing only the capital alphabet letters.
     char filename[] = "./test_files/test_read_file.txt";
     std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
@@ -205,7 +205,7 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
     test_file.write((char*)test_nums, alphabet_length*sizeof(int));
     test_file.close();
     
-    SECTION("read ... ") {
+    SECTION("read with much larger buffer... ") {
         int buf_size = 20;
         BlockBuffer buffer(buf_size);
         
@@ -241,10 +241,14 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
             REQUIRE(!buffer.isEmpty());
             REQUIRE(bytes_read == buf_size / 2);
         }
-        
         read_file.close();
     }
+    
+    SECTION("read with buffer much smaller than file...") {
+        REQUIRE(1 == 2);
+    }
 }
+
 
 TEST_CASE("BlockBuffer: File Writing ... ") {
     // Create file with a starting number of "A" characters in it.

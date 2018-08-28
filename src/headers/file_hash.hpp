@@ -5,6 +5,7 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 #include "block_buffer.hpp"
 
 using namespace std;
@@ -31,7 +32,7 @@ public:
     int getBlockSize();
     ~FileHasher();
     
-    void testHash(char* file);
+    void testHash(std::string file, std::vector<std::string> dests);
 
         
 };

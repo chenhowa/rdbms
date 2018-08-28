@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <vector>
 
 
 #include "file_hash.hpp"
@@ -58,32 +59,48 @@ FileHasher::~FileHasher() {
    
 }
 
-void testHash(char* file) {
-    // open the file
+void FileHasher::testHash(std::string file, std::vector<std::string> dests) {
+    // open the input file
     std::ifstream in(file, std::ifstream::binary);
     if(!in) {
         throw "Failure to open input file";
     }
     
+    // open the output files. Truncate for testing purposees.
+    std::vector<std::ofstream*> hash_outputs;
+    for(unsigned i = 0; i < dests.size(); i++) {
+        hash_outputs.push_back(new std::ofstream(dests[i],
+                std::ofstream::trunc | std::ofstream::binary | std::ofstream::in));
+    }
     
-    
-    // Read a block into input
-    this->input.read(in);
-    
-    // For every value in the file:
-    char c;
-    int hash_val;
+    // While there is more data to read
     while(in) {
-        // Read in a value to input
-        c = (char)in.get();
-
-        // Hash the value.
-        hash_val = ((int)c) %
-    
-        // Based on the hash value, send it to the appropriate
-        // output buffer.
+        // If the input block is empty, read in a block.
+        if(this->input->isEmpty()) {
+            this->input->read(in);
+        }
         
-        // Check if that output buffer is full. If it is
-        // flush it, and then continue.
+        // while the input buffer has more data to process
+        char data;
+        int hash_val;
+        while(! this->input->isEmpty()) {
+            // read the next piece of data.
+            this->input->write(1, &data);
+            
+            // TODO : Ensure that bug in BlockBuffer is fixed:
+            // EOF SHOULDn"T BE READ INTO THE BUFFER
+            
+            // hash the next piece of data.
+            hash_val = ((int)data) % this->numOutputBuffers();
+            
+            // Send the data to the correct output buffer.
+            this->outputs[hash_val]->read(1, &data);
+            
+            // Check if the output buffer is full. If it is,
+            // then flush it, before continuing.
+            if(this->outputs[hash_val]->isFull()) {
+                this->outputs[hash_val]->write(*(hash_outputs[hash_val]));
+            }
+        }
     }
 }
