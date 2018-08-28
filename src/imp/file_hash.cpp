@@ -54,12 +54,5 @@ int FileHasher::getBlockSize() {
 }
 
 FileHasher::~FileHasher() {
-    /*delete this->input;
-    
-    for(int i = 0; i < this->_numOutputBuffers; i++) {
-        delete this->outputs[i];
-    }
-    
-    delete [] this->outputs;
-    */
+   
 }

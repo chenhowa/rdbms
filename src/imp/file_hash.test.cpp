@@ -14,3 +14,7 @@ TEST_CASE("file hasher initializes correctly with custom"
     REQUIRE(hasher.getBlockSize() == blocksize);
     REQUIRE(hasher.numOutputBuffers() == num_outputs);
 }
+
+TEST_CASE("") {
+    
+}
