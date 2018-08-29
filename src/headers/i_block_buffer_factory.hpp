@@ -7,6 +7,7 @@
 #include "i_block_buffer.hpp"
 
 class IBlockBufferFactory {
+public:
     virtual IBlockBuffer* make(int blocksize) = 0;
     virtual ~IBlockBufferFactory();
 };

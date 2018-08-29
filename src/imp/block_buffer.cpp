@@ -1,13 +1,15 @@
 
 
 
-
-#include "block_buffer.hpp"
+#include <memory>
 #include <string>
 #include <assert.h>
 #include <cstdio>
 #include <fstream>
 #include <stdio.h>
+
+#include "block_buffer.hpp"
+
 
 using namespace std;
 
@@ -15,11 +17,11 @@ BlockBuffer::BlockBuffer() {
     
 }
 
-BlockBuffer::BlockBuffer(int blocksize) :
-    start_byte(0),
-    end_byte(0),
-    count(0),
-    max_bytes(blocksize) {
+BlockBuffer::BlockBuffer( int blocksize) :
+        start_byte(0),
+        end_byte(0),
+        count(0),
+        max_bytes(blocksize) {
     buffer.reset(new char[blocksize]);
     
     assert(blocksize > 0);
@@ -28,7 +30,6 @@ BlockBuffer::BlockBuffer(int blocksize) :
 bool BlockBuffer::isEmpty() {
     return start_byte == end_byte && count == 0;
 }
-
 
 bool BlockBuffer::isFull() {
     return count == max_bytes;
@@ -168,5 +169,25 @@ bool BlockBuffer::isEnd(int index) {
 
 bool BlockBuffer::isCount(int c) {
     return c == this->count;
+}
+
+BlockBuffer::~BlockBuffer() {}
+
+
+fruit::Component<IBlockBufferFactory> getBlockBufferComponent() {
+    return fruit::createComponent()
+        .bind<IBlockBuffer, BlockBuffer>()
+        .registerFactory<std::unique_ptr<IBlockBuffer>(fruit::Assisted<int>)>(
+            [](int blocksize) {
+            return std::unique_ptr<IBlockBuffer>(new BlockBuffer(blocksize));
+        });
+}
+
+fruit::Component<BlockBufferFactory> getTestingBlockBufferComponent() {
+    return fruit::createComponent()
+        .registerFactory<std::unique_ptr<BlockBuffer>(fruit::Assisted<int>)>(
+            [](int blocksize) {
+            return std::unique_ptr<BlockBuffer>(new BlockBuffer(blocksize));
+        });
 }
 

@@ -8,7 +8,6 @@
 #include <vector>
 #include <memory>
 #include "i_block_buffer.hpp"
-#include "i_block_buffer_factory.hpp"
 
 using namespace std;
 
@@ -28,15 +27,13 @@ private:
     unique_ptr<IBlockBuffer> input;
     unique_ptr< unique_ptr<IBlockBuffer>[]> outputs;
 public:
-    FileHasher(int num_outputs, IBlockBufferFactory* fac);
-    FileHasher(int num_outputs, int blocksize, IBlockBufferFactory* fac);
+    FileHasher(int num_outputs);
+    FileHasher(int num_outputs, int blocksize);
     int numOutputBuffers();
     int getBlockSize();
     ~FileHasher();
     
     void testHash(std::string file, std::vector<std::string> dests);
-
-        
 };
 
 

@@ -6,6 +6,7 @@
 
 
 #include "file_hash.hpp"
+#include "i_block_buffer.hpp"
 
 // USE UNIQUE POINTERS. REMOVE ALLOCATION BUGS
 // FROM YOUR PROGRAM.
@@ -21,26 +22,26 @@ FileHasher::FileHasher() {
     
 }
 
-FileHasher::FileHasher(int num_outputs, IBlockBufferFactory* fac) {
+FileHasher::FileHasher(int num_outputs) {
     this->blocksize = calcBlockSize();
     
-    this->input.reset(new BlockBuffer(this->blocksize) );
+    this->input.reset(fac->make(this->blocksize) );
     this->_numOutputBuffers = num_outputs;
-    this->outputs.reset(new unique_ptr<BlockBuffer>[this->_numOutputBuffers]);
+    this->outputs.reset(new unique_ptr<IBlockBuffer>[this->_numOutputBuffers]);
     
     for(int i = 0; i < this->_numOutputBuffers; i++) {
-        this->outputs[i].reset(new BlockBuffer(this->blocksize) );
+        this->outputs[i].reset(fac->make(this->blocksize) );
     }
 }
 
-FileHasher::FileHasher(int num_outputs, int blocksize, IBlockBufferFactory* fac) {
+FileHasher::FileHasher(int num_outputs, int blocksize) {
     this->blocksize = blocksize;
-    this->input.reset(new BlockBuffer(this->blocksize) );
+    this->input.reset(fac->make(this->blocksize) );
     this->_numOutputBuffers = num_outputs;
-    this->outputs.reset( new unique_ptr<BlockBuffer>[this->_numOutputBuffers] );
+    this->outputs.reset( new unique_ptr<IBlockBuffer>[this->_numOutputBuffers] );
     
     for(int i = 0; i < this->_numOutputBuffers; i++) {
-        this->outputs[i].reset( new BlockBuffer(this->blocksize) );
+        this->outputs[i].reset( fac->make(this->blocksize) );
     }
     
 }
@@ -86,7 +87,7 @@ void FileHasher::testHash(std::string file, std::vector<std::string> dests) {
             // read the next piece of data.
             this->input->write(1, &data);
             
-            // TODO : Ensure that bug in BlockBuffer is fixed:
+            // TODO : Ensure that bug in IBlockBuffer is fixed:
             // EOF SHOULDn"T BE READ INTO THE BUFFER
             
             // hash the next piece of data.

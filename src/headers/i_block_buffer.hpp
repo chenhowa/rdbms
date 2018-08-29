@@ -16,10 +16,10 @@ public:
     virtual bool isEmpty() = 0;
     virtual bool isFull() = 0;
     virtual int write(int num_bytes, char* dest) = 0;
-    virtual int write(std::ofstream &out);
+    virtual int write(std::ofstream &out) = 0;
     virtual int read(int num_bytes, char* src) = 0;
     virtual int read(std::ifstream &in) = 0;
-    virtual ~IBlockBuffer();
+    virtual ~IBlockBuffer() { };
 };
 
-#endif
+#endif // I_BLOCK_BUFFER_HPP
