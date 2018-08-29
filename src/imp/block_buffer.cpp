@@ -117,7 +117,11 @@ int BlockBuffer::read(ifstream &in) {
     
     // Read until full, or until the file ends.
     while(count < max_bytes && in) {
-        buffer[end_byte] = (char)in.get();
+        char val = (char)in.get();
+        if(!in) {
+            break; // if we have reached the end of file, stop.
+        }
+        buffer[end_byte] = val;
         count++;
         end_byte = (end_byte + 1) % max_bytes;
         bytes_read += 1;

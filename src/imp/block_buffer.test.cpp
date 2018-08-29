@@ -188,25 +188,21 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
     }
 }
 
-TEST_CASE("BlockBuffer: File Reading from file smaller than buffer ... ") {
+TEST_CASE("BlockBuffer: File Reading ... ") {
     // Create test file containing only the capital alphabet letters.
     char filename[] = "./test_files/test_read_file.txt";
     std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
     if(!test_file) {
         REQUIRE(1 == 2);
     }
-    int ascii_A = 65;
-    int alphabet_length = 27;
-    int* test_nums = new int[alphabet_length];
-    for(int i = 0; i < alphabet_length; i++) {
-        test_nums[i] = ascii_A + i;
-    }
+    int test_length = 26;
+    char* test_chars = makeBuffer(test_length, 'A');
     
-    test_file.write((char*)test_nums, alphabet_length*sizeof(int));
+    test_file.write(test_chars, test_length);
     test_file.close();
     
-    SECTION("read with much larger buffer... ") {
-        int buf_size = 20;
+    SECTION("read with buffer smaller than file... ") {
+        int buf_size = test_length - 2;
         BlockBuffer buffer(buf_size);
         
         std::ifstream read_file(filename, std::ofstream::binary);
@@ -244,8 +240,46 @@ TEST_CASE("BlockBuffer: File Reading from file smaller than buffer ... ") {
         read_file.close();
     }
     
-    SECTION("read with buffer much smaller than file...") {
-        REQUIRE(1 == 2);
+    SECTION("read with buffer larger than file...") {
+        int buf_size = test_length + 1;
+        BlockBuffer buffer(buf_size);
+        
+        std::ifstream read_file(filename, std::ofstream::binary);
+        if(!read_file) {
+            perror("Problem opening file for read\n");
+            REQUIRE(1 == 2);
+        }
+        
+        REQUIRE(buffer.isEmpty());
+        
+        int bytes_read = buffer.read(read_file);
+        REQUIRE(bytes_read == test_length);
+        REQUIRE(!buffer.isFull());
+        REQUIRE(buffer.isCount(test_length));
+        REQUIRE(buffer.isStart(0));
+        REQUIRE(buffer.isEnd(test_length));
+        REQUIRE(buffer.bufferEquals(test_length, test_chars));
+    }
+    
+    SECTION("read with buffer same size as file...") {
+        int buf_size = test_length;
+        BlockBuffer buffer(buf_size);
+        
+        std::ifstream read_file(filename, std::ofstream::binary);
+        if(!read_file) {
+            perror("Problem opening file for read\n");
+            REQUIRE(1 == 2);
+        }
+        
+        REQUIRE(buffer.isEmpty());
+        
+        int bytes_read = buffer.read(read_file);
+        REQUIRE(buffer.isFull());
+        REQUIRE(buffer.isCount(buf_size));
+        REQUIRE(buffer.isStart(0));
+        REQUIRE(buffer.isEnd(0));
+        REQUIRE(!buffer.isEmpty());
+        REQUIRE(bytes_read == buf_size);
     }
 }
 
