@@ -351,3 +351,36 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt", "half-full => empty"));
     }
 }
+
+TEST_CASE("BlockBuffer Integration: Reading and Writing to File ... ") {
+    // Generate test files.
+    
+    // TODO : Add additional integration tests
+    
+    
+    // Generate half-full buffer.
+    
+    
+    SECTION("half-full => empty => full") {
+        
+        
+        SECTION("...run parent by itself") {
+            
+        }
+        
+        SECTION("parent: => empty") {
+            
+        }
+    }
+}
+
+
+TEST_CASE("BlockBuffer Integration: Reading and Writing to File AND Disk") {
+    // Todo : Add additional integration tests.
+    
+    // Generate test files
+    
+    SECTION("WHAT TESTS TO RUN???") {
+        
+    }
+}

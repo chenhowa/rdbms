@@ -6,7 +6,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include "block_buffer.hpp"
+#include <memory>
+#include "i_block_buffer.hpp"
+#include "i_block_buffer_factory.hpp"
 
 using namespace std;
 
@@ -23,11 +25,11 @@ private:
     FileHasher();
     int blocksize;
     int _numOutputBuffers;
-    unique_ptr<BlockBuffer> input;
-    unique_ptr< unique_ptr<BlockBuffer>[]> outputs;
+    unique_ptr<IBlockBuffer> input;
+    unique_ptr< unique_ptr<IBlockBuffer>[]> outputs;
 public:
-    FileHasher(int num_outputs);
-    FileHasher(int num_outputs, int blocksize);
+    FileHasher(int num_outputs, IBlockBufferFactory* fac);
+    FileHasher(int num_outputs, int blocksize, IBlockBufferFactory* fac);
     int numOutputBuffers();
     int getBlockSize();
     ~FileHasher();

@@ -6,7 +6,6 @@
 
 
 #include "file_hash.hpp"
-#include "block_buffer.hpp"
 
 // USE UNIQUE POINTERS. REMOVE ALLOCATION BUGS
 // FROM YOUR PROGRAM.
@@ -22,7 +21,7 @@ FileHasher::FileHasher() {
     
 }
 
-FileHasher::FileHasher(int num_outputs) {
+FileHasher::FileHasher(int num_outputs, IBlockBufferFactory* fac) {
     this->blocksize = calcBlockSize();
     
     this->input.reset(new BlockBuffer(this->blocksize) );
@@ -34,7 +33,7 @@ FileHasher::FileHasher(int num_outputs) {
     }
 }
 
-FileHasher::FileHasher(int num_outputs, int blocksize) {
+FileHasher::FileHasher(int num_outputs, int blocksize, IBlockBufferFactory* fac) {
     this->blocksize = blocksize;
     this->input.reset(new BlockBuffer(this->blocksize) );
     this->_numOutputBuffers = num_outputs;
