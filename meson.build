@@ -5,7 +5,8 @@ incdir = include_directories('src/headers')
 
 # Build executable for BlockBuffer unit tests
 buffer_imps = ['src/imp/block_buffer.cpp']
-test_buffer_src = buffer_imps + ['src/main.buffer.test.cpp']
+test_mocks = []
+test_buffer_src = buffer_imps + test_mocks + ['src/main.buffer.test.cpp']
 test_buffer = executable('buffer.test', test_buffer_src, include_directories : incdir,
                 cpp_args : '-lfruit', link_args : '-lfruit')
 test('blockbuffer', test_buffer)
