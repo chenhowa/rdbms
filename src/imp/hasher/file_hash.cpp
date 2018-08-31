@@ -1,0 +1,142 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
+#include <assert.h>
+
+
+#include "file_hash.hpp"
+#include "i_block_buffer.hpp"
+#include "block_buffer.hpp"
+
+int calcBlockSize() {
+    struct stat s;
+    stat("/", &s);
+    printf("Blocksize: %i\n", (int)s.st_blksize);
+    return (int)(s.st_blksize);
+}
+
+FileHasher::FileHasher() {
+    
+}
+
+FileHasher::FileHasher(int num_outputs, IBlockBufferFactory fac) {
+    this->blocksize = calcBlockSize();
+    
+    this->input = fac(this->blocksize);
+    this->_numOutputBuffers = num_outputs;
+    this->outputs.reset(new unique_ptr<IBlockBuffer>[this->_numOutputBuffers]);
+    
+    for(unsigned i = 0; i < this->_numOutputBuffers; i++) {
+        this->outputs[i] = fac(this->blocksize);
+    }
+}
+
+FileHasher::FileHasher(int num_outputs, int blocksize, IBlockBufferFactory fac) {
+    this->blocksize = blocksize;
+    this->input = fac(this->blocksize);
+    this->_numOutputBuffers = num_outputs;
+    this->outputs.reset( new unique_ptr<IBlockBuffer>[this->_numOutputBuffers] );
+    
+    for(unsigned i = 0; i < this->_numOutputBuffers; i++) {
+        this->outputs[i] = fac(this->blocksize);
+    }
+}
+
+// The IBlockBuffers should all be the same size, and of the 
+// same concrete type. Otherwise the behavior of the constructed
+// FileHasher is not defined.
+FileHasher::FileHasher(IBlockBuffer* in, IBlockBuffer* out_1, IBlockBuffer* out_2) {
+    this->blocksize = 0;
+    this->input.reset(in);
+    this->_numOutputBuffers = 2;
+    this->outputs.reset(new unique_ptr<IBlockBuffer>[2]);
+    this->outputs[0].reset(out_1);
+    this->outputs[1].reset(out_2);
+}
+
+unsigned FileHasher::numOutputBuffers() {
+    return this->_numOutputBuffers;
+}
+
+
+unsigned FileHasher::getBlockSize() {
+    return this->blocksize;
+}
+
+FileHasher::~FileHasher() {
+   
+}
+
+/*
+ * This function is a test implementation of the hashing algorithm. 
+ * @ file - a handle to the input stream to read data from.
+ * @ dests - a vector of handles to output streams to write hashed data to.
+ * @@ pre - all stream handles are in good condition.
+ * @@ post - data in input file will be hashed and sent to destinations.
+ * 
+ */
+void FileHasher::testHash(std::istream &in, std::vector<std::ostream*> &dests) {
+    assert(in.good());
+    assert(dests.size() <= this->numOutputBuffers());
+    assert(dests.size() > 0);
+    for(unsigned i = 0; i < dests.size(); i++) {
+        assert(dests[i]->good());
+    }
+    
+    // While there is more data to read
+    while(!in.good()) {
+        // If the input block is empty, read in a block.
+        if(this->input->isEmpty()) {
+            this->input->read(in);
+        }
+        
+        // while the input buffer has more data to process
+        char data;
+        int hash_val;
+        while(! this->input->isEmpty()) {
+            // read the next piece of data.
+            this->input->write(1, &data);
+            
+            // hash the next piece of data.
+            hash_val = ((int)data) % this->numOutputBuffers();
+            
+            // Send the data to the correct output buffer.
+            this->outputs[hash_val]->read(1, &data);
+            
+            // Check if the output buffer is full. If it is,
+            // then flush it, before continuing.
+            if(this->outputs[hash_val]->isFull()) {
+                this->outputs[hash_val]->write(*(dests[hash_val]));
+            }
+        }
+    }
+}
+
+fruit::Component<IFileHasherFactory> getFileHasherComponent() {
+    return fruit::createComponent()
+        .install(getBlockBufferComponent)
+        .registerFactory<std::unique_ptr<IFileHasher>(
+                fruit::Assisted<int>, 
+                fruit::Assisted<int>, 
+                IBlockBufferFactory)> (
+            [](int num_outputs, int blocksize, IBlockBufferFactory fac) {
+                return std::unique_ptr<IFileHasher>(
+                    new FileHasher(num_outputs, blocksize, fac)
+                );
+            });
+}
+
+fruit::Component<FileHasherFactory> _getFileHasherComponent() {
+    return fruit::createComponent()
+        .install(getBlockBufferComponent)
+        .registerFactory<std::unique_ptr<FileHasher>(
+                fruit::Assisted<int>, 
+                fruit::Assisted<int>, 
+                IBlockBufferFactory)> (
+            [](int num_outputs, int blocksize, IBlockBufferFactory fac) {
+                return std::unique_ptr<FileHasher>(
+                    new FileHasher(num_outputs, blocksize, fac)
+                );
+            });
+}

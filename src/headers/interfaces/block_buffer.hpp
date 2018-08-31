@@ -9,9 +9,9 @@
 #include <string>
 #include <assert.h>
 #include <cstdio>
-#include <fstream>
 #include <stdio.h>
-#include <iostream>
+#include "i_input_stream.hpp"
+#include "i_output_stream.hpp"
 
 using namespace std;
 
@@ -42,7 +42,7 @@ public:
     //          the size of the BlockBuffer
     // @ post - BlockBuffer will be empty.
     // @ return - returns number of bytes written.
-    int write(ostream &out) override;
+    int write(IOutputStream &out) override;
     
     // Buffer overflows are possible with the write. Be
     // careful to allocate enough memory for the destination!
@@ -60,7 +60,7 @@ public:
     //          read to be full
     // @ post - BlockBuffer will be full.
     // @ return - returns number of bytes read.
-    int read(istream &in) override;
+    int read(IInputStream &in) override;
     
     bool bufferEquals(int num_bytes, char* src);
     

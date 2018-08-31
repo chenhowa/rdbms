@@ -5,12 +5,9 @@
 #include <string>
 #include <assert.h>
 #include <cstdio>
-#include <fstream>
-#include <iostream>
 #include <stdio.h>
 
 #include "block_buffer.hpp"
-
 
 using namespace std;
 
@@ -62,8 +59,7 @@ int BlockBuffer::write(int num_bytes, char* dest) {
 //          the size of the BlockBuffer
 // @ post - BlockBuffer will be empty.
 // @ return - returns number of bytes written.
-int BlockBuffer::write(ostream &out) {
-    //assert(out.is_open());
+int BlockBuffer::write(IOutputStream &out) {
     assert(out.good());
     int bytes_written = 0;
     
@@ -111,7 +107,7 @@ int BlockBuffer::read(int num_bytes, char* src) {
 //          read to be full
 // @ post - BlockBuffer will be full.
 // @ return - returns number of bytes read.
-int BlockBuffer::read(istream &in) {
+int BlockBuffer::read(IInputStream &in) {
     // assert(in.is_open());
     assert(in.good());
     

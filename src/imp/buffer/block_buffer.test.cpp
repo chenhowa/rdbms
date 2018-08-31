@@ -8,53 +8,14 @@
 #include <cstdio> // for std::tmpnam
 #include <stdio.h>
 
+#include "string_input_stream.hpp"
+#include "string_output_stream.hpp"
+
 char* makeBuffer(int size, char value) {
     char* buffer = new char[size];
     memset(buffer, value, size);
     return buffer;
 }
-
-bool verifyFilesAreSame(const char* filename1, const char* filename2, const char* message) {
-    // printf("Testing: %s\n", message);
-    std::ifstream input_1(filename1, std::ifstream::binary);
-    std::ifstream input_2(filename2, std::ifstream::binary);
-    
-    if(!input_1) {
-        perror("input 1 not opened correctly");
-    }
-    
-    if(!input_2) {
-        perror("input 2 not opened correctly");
-    }
-    
-    char val_1;
-    char val_2;
-    
-    while(input_1 || input_2) {
-        val_1 = input_1.get();
-        val_2 = input_2.get();
-        /*
-         * This is more thorough instrumentation to see the values of each file.
-        printf("%i / ", val_1);
-        printf("%i\n", val_2);
-        */
-        
-        
-        if(val_1 != val_2) {
-            perror("values not equal\n");
-            printf("val_1: %i val_2: %i\n", val_1, val_2);
-            return false;
-        }
-        
-        if( (input_1 && !input_2) || (!input_1 && input_2) ) {
-            perror("streams not in same state");
-            return false;
-        }
-    }
-    
-    return true;
-}
-
 
 TEST_CASE("BlockBuffer: Read from RAM ... ") {
     fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
@@ -197,49 +158,40 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
     }
 }
 
-TEST_CASE("BlockBuffer: File Reading ... ") {
+TEST_CASE("BlockBuffer: Stream Reading ... ") {    
     // Create test file containing only the capital alphabet letters.
-    char filename[] = "./test_files/test_read_file.txt";
-    std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
-    if(!test_file) {
-        REQUIRE(1 == 2);
-    }
     int test_length = 26;
-    char* test_chars = makeBuffer(test_length, 'A');
+    std::string test_vals(test_length, 'A');
+    fruit::Injector<IStringInputStream> stream_inj(getIStringInputStream);
+    IStringInputStream* test_stream = stream_inj.get<IStringInputStream*>();
+    (test_stream)->setContent(test_vals);
     
-    test_file.write(test_chars, test_length);
-    test_file.close();
-    
-    SECTION("read with buffer smaller than file... ") {
+    SECTION("read with buffer smaller than stream... ") {
         fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length - 2;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
         
-        std::ifstream read_file(filename, std::ofstream::binary);
-        if(!read_file) {
-            perror("Problem opening file for read\n");
-            REQUIRE(1 == 2);
-        }
-        
         REQUIRE(buffer->isEmpty());
         
         SECTION("empty => full") {
-            int bytes_read = buffer->read(read_file);
+            int bytes_read = buffer->read(*test_stream);
             REQUIRE(buffer->isFull());
             REQUIRE(buffer->isCount(buf_size));
             REQUIRE(buffer->isStart(0));
             REQUIRE(buffer->isEnd(0));
             REQUIRE(!buffer->isEmpty());
             REQUIRE(bytes_read == buf_size);
+            char* verif = makeBuffer(buf_size, 'A');
+            REQUIRE(buffer->bufferEquals(buf_size, verif));
         }
         
         SECTION("half-full => full") {
             int src_size = buf_size / 2;
-            char* src = makeBuffer(src_size, 'a');
+            char* src = makeBuffer(src_size, 'A');
             buffer->read(src_size, src);
             
-            int bytes_read = buffer->read(read_file);
+            int bytes_read = buffer->read(*test_stream);
             
             REQUIRE(buffer->isFull());
             REQUIRE(buffer->isCount(buf_size));
@@ -247,80 +199,63 @@ TEST_CASE("BlockBuffer: File Reading ... ") {
             REQUIRE(buffer->isEnd(0));
             REQUIRE(!buffer->isEmpty());
             REQUIRE(bytes_read == buf_size / 2);
+            char* verif = makeBuffer(buf_size, 'A');
+            REQUIRE(buffer->bufferEquals(buf_size, verif));
         }
-        read_file.close();
     }
     
-    SECTION("read with buffer larger than file...") {
+    SECTION("read with buffer larger than stream...") {
         fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length + 1;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
         
-        std::ifstream read_file(filename, std::ofstream::binary);
-        if(!read_file) {
-            perror("Problem opening file for read\n");
-            REQUIRE(1 == 2);
-        }
-        
         REQUIRE(buffer->isEmpty());
         
-        int bytes_read = buffer->read(read_file);
+        int bytes_read = buffer->read(*test_stream);
         REQUIRE(bytes_read == test_length);
         REQUIRE(!buffer->isFull());
         REQUIRE(buffer->isCount(test_length));
         REQUIRE(buffer->isStart(0));
         REQUIRE(buffer->isEnd(test_length));
-        REQUIRE(buffer->bufferEquals(test_length, test_chars));
+        char* verif = makeBuffer(test_length, 'A');
+        REQUIRE(buffer->bufferEquals(test_length, verif));
     }
     
-    SECTION("read with buffer same size as file...") {
+    SECTION("read with buffer same size as stream...") {
         fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
         
-        std::ifstream read_file(filename, std::ofstream::binary);
-        if(!read_file) {
-            perror("Problem opening file for read\n");
-            REQUIRE(1 == 2);
-        }
-        
         REQUIRE(buffer->isEmpty());
         
-        int bytes_read = buffer->read(read_file);
+        int bytes_read = buffer->read(*test_stream);
         REQUIRE(buffer->isFull());
         REQUIRE(buffer->isCount(buf_size));
         REQUIRE(buffer->isStart(0));
         REQUIRE(buffer->isEnd(0));
         REQUIRE(!buffer->isEmpty());
         REQUIRE(bytes_read == buf_size);
+        char* verif = makeBuffer(buf_size, 'A');
+        REQUIRE(buffer->bufferEquals(buf_size, verif));
     }
 }
 
 
-TEST_CASE("BlockBuffer: File Writing ... ") {
-    // Create file with a starting number of "A" characters in it.
-    char filename[] = "./test_files/test_write_file.txt";
-    std::ofstream test_file(filename, std::ofstream::binary | std::ofstream::trunc);
-    if(!test_file) {
-        REQUIRE(1 == 2);
-    }
+TEST_CASE("BlockBuffer: Stream Writing ... ") {
+    // Create starting write stream with a starting number of "A" characters in it.
     
     int test_len = 5;
-    char* test_vals = makeBuffer(test_len, 'A');
+    std::string test_vals = std::string(test_len, 'A');
+    fruit::Injector<IStringOutputStream> stream_inj(getIStringOutputStream);
+    IStringOutputStream* test_stream = stream_inj.get<IStringOutputStream*>();
+    (test_stream)->setContent(test_vals);
+    REQUIRE((test_stream)->getContent() == test_vals);
+
     
-    test_file.write((char*)test_vals, test_len);
-    test_file.close();
-    
-    // Prepare to write to the file.
-    std::ofstream write_file(filename, std::ofstream::binary | std::ofstream::ate | std::ofstream::in);
-    if(!write_file) {
-        perror("Problem opening file for write\n");
-        REQUIRE(1 == 2);
-    }
-    
-    int buf_size = 10;
+    // Create a BlockBuffer to write things to the stream
+    int buf_size = 11;
     
     fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
     BlockBufferFactory bufferFactory(injector);
@@ -330,12 +265,12 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
     
     SECTION("full => empty") {
         int src_size = buf_size;
-        char* src = makeBuffer(src_size, 'B');
+        char* src = makeBuffer(src_size, 'A');
         buffer->read(src_size, src);
         
         REQUIRE(buffer->isFull());
         
-        buffer->write(write_file);
+        buffer->write(*test_stream);
         
         REQUIRE(buffer->isEmpty());
         REQUIRE(!buffer->isFull());
@@ -343,33 +278,33 @@ TEST_CASE("BlockBuffer: File Writing ... ") {
         REQUIRE(buffer->isStart(0));
         REQUIRE(buffer->isEnd(0));
         
-        write_file.close();
-        
-        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_full_write.txt", "full => empty"));        
+        std::string verify(test_len + src_size, 'A');
+        REQUIRE(verify == (test_stream)->getContent() );
     }
     
     SECTION("half-full => empty") {
         int src_size = buf_size / 2;
-        char *src = makeBuffer(src_size, 'B');
+        char *src = makeBuffer(src_size, 'A');
         buffer->read(src_size, src);
         
         REQUIRE(!buffer->isFull());
         REQUIRE(!buffer->isEmpty());
         REQUIRE(buffer->isCount(src_size));
         
-        buffer->write(write_file);
+        buffer->write(*test_stream);
         
         REQUIRE(buffer->isEmpty());
         REQUIRE(buffer->isCount(0));
         REQUIRE(buffer->isStart(src_size));
         REQUIRE(buffer->isEnd(src_size));
         
-        write_file.close();
-        
-        REQUIRE(verifyFilesAreSame(filename, "./test_files/expected_half_write.txt", "half-full => empty"));
+        std::string verify(test_len + src_size, 'A');
+        REQUIRE(verify == (test_stream)->getContent());
     }
+    
 }
 
+/*
 TEST_CASE("BlockBuffer Integration: Reading and Writing to File ... ") {
     // Generate test files.
     
@@ -402,3 +337,4 @@ TEST_CASE("BlockBuffer Integration: Reading and Writing to File AND Disk") {
         
     }
 }
+*/
