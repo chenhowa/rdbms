@@ -97,7 +97,7 @@ void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) 
         
         // while the input buffer has more data to process
         char data;
-        int hash_val;
+        unsigned hash_val;
         while(! this->input->isEmpty()) {
             // read the next piece of data.
             this->input->write(1, &data);
@@ -105,7 +105,7 @@ void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) 
             //printf("data read: %i\n", data);
             
             // hash the next piece of data.
-            hash_val = ((int)data) % this->numOutputBuffers();
+            hash_val = ((unsigned)data) % dests.size();
             
             //printf("hash val: %i\n", hash_val);
             

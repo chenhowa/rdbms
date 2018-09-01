@@ -43,7 +43,7 @@ TEST_CASE("file hasher, with small number of buffers, correctly hashes ... ") {
     REQUIRE(hasher.getBlockSize() == 0);
     REQUIRE(hasher.numOutputBuffers() == 2);
     
-    SECTION("input smaller than blocksize... ") {   
+    SECTION("input smaller than total output blocksize... ") {   
         fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
         fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
         fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
@@ -96,6 +96,60 @@ TEST_CASE("file hasher, with small number of buffers, correctly hashes ... ") {
     }
     
     
+    SECTION("input same size as output buffer size") {
+        fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
+        fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
+        fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
+        
+        std::vector<IOutputStream*> dests;
+        IStringInputStream *in_stream(input_injector);
+        std::string input = std::string(blocksize, 'A')
+                            + std::string(blocksize, 'B')
+                            + std::string(blocksize, 'C')
+                            + std::string(blocksize, 'D');
+        
+        REQUIRE(input.length() == 4 * blocksize);
+        
+        in_stream->setContent(input);
+        REQUIRE(in_stream->getContent() == input);
+        
+        IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
+        REQUIRE(out_stream_1 != out_stream_2);
+        dests.push_back(out_stream_1);
+        dests.push_back(out_stream_2);
+        hasher.testHash(*in_stream, dests);
+        
+        /*
+        printf("in_stream_content: %s\n", in_stream->getContent().c_str());
+        printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
+        printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
+        printf("in_buf_content: %s\n", in_buf->getBufferContents().c_str());
+        printf("out_buf_1 content: %s\n", out_buf_1->getBufferContents().c_str());
+        printf("out_buf_2 content: %s\n", out_buf_2->getBufferContents().c_str());
+        */
+        
+        REQUIRE(in_buf->getBufferContents().empty());
+        REQUIRE(in_buf->getCharsRead() == input );
+        REQUIRE(in_buf->getCharsWritten() == input );
+        
+        REQUIRE(out_buf_1->getBufferContents().empty());
+        std::string res_1 = std::string(blocksize, 'B') + std::string(blocksize, 'D');
+        REQUIRE(out_buf_1->getCharsRead() == res_1);
+        REQUIRE(out_buf_1->getCharsWritten() == res_1);
+        
+        REQUIRE(out_buf_2->getBufferContents().empty());
+        std::string res_2 = std::string(blocksize, 'A') + std::string(blocksize, 'C');
+        REQUIRE(out_buf_2->getCharsRead() == res_2);
+        REQUIRE(out_buf_2->getCharsWritten() == res_2);
+        
+        REQUIRE(! (*in_stream) );
+        REQUIRE(!in_stream->good());
+        REQUIRE(in_stream->eof());
+
+        REQUIRE(out_stream_1->getContent() == res_1);
+        REQUIRE(out_stream_2->getContent() == res_2);
+    }
+    
     SECTION("input larger than buffer size") {
         fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
         fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
@@ -103,57 +157,12 @@ TEST_CASE("file hasher, with small number of buffers, correctly hashes ... ") {
         
         std::vector<IOutputStream*> dests;
         IStringInputStream *in_stream(input_injector);
-        std::string input("ABCDABCDABCDABCD");
-        
-        REQUIRE(input.length() > blocksize);
-        
-        in_stream->setContent(input);
-        REQUIRE(in_stream->getContent() == input);
-        
-        IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
-        REQUIRE(out_stream_1 != out_stream_2);
-        dests.push_back(out_stream_1);
-        dests.push_back(out_stream_2);
-        hasher.testHash(*in_stream, dests);
-        
-        /*
-        printf("in_stream_content: %s\n", in_stream->getContent().c_str());
-        printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
-        printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
-        printf("in_buf_content: %s\n", in_buf->getBufferContents().c_str());
-        printf("out_buf_1 content: %s\n", out_buf_1->getBufferContents().c_str());
-        printf("out_buf_2 content: %s\n", out_buf_2->getBufferContents().c_str());
-        */
-        
-        REQUIRE(in_buf->getBufferContents().empty());
-        REQUIRE(in_buf->getCharsRead() == input );
-        REQUIRE(in_buf->getCharsWritten() == input );
-        
-        REQUIRE(out_buf_1->getBufferContents().empty());
-        REQUIRE(out_buf_1->getCharsRead() == std::string("BDBDBDBD"));
-        REQUIRE(out_buf_1->getCharsWritten() == std::string("BDBDBDBD"));
-        
-        REQUIRE(out_buf_2->getBufferContents().empty());
-        REQUIRE(out_buf_2->getCharsRead() == std::string("ACACACAC"));
-        REQUIRE(out_buf_2->getCharsWritten() == std::string("ACACACAC"));
-        
-        REQUIRE(! (*in_stream) );
-        REQUIRE(!in_stream->good());
-        REQUIRE(in_stream->eof());
-
-        REQUIRE(out_stream_1->getContent() == std::string("BDBDBDBD"));
-        REQUIRE(out_stream_2->getContent() == std::string("ACACACAC"));
-    }
-    
-    SECTION("input the same size as buffer size") {
-        fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
-        fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
-        fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
-        
-        std::vector<IOutputStream*> dests;
-        IStringInputStream *in_stream(input_injector);
-        std::string input("ABCDABCDAB");
-        REQUIRE(input.length() == blocksize);
+        unsigned input_size = 2 * blocksize;
+        std::string input = std::string(input_size, 'A')
+                            + std::string(input_size, 'B')
+                            + std::string(input_size, 'C')
+                            + std::string(input_size, 'D');
+        REQUIRE(input.length() == 8 * blocksize);
         
         in_stream->setContent(input);
         REQUIRE(in_stream->getContent() == input);
@@ -179,24 +188,73 @@ TEST_CASE("file hasher, with small number of buffers, correctly hashes ... ") {
         REQUIRE(in_buf->getCharsWritten() == input );
         
         REQUIRE(out_buf_1->getBufferContents().empty());
-        REQUIRE(out_buf_1->getCharsRead() == std::string("BDBDB"));
-        REQUIRE(out_buf_1->getCharsWritten() == std::string("BDBDB"));
+        std::string res_1 = std::string(input_size, 'B') + std::string(input_size, 'D');
+        REQUIRE(out_buf_1->getCharsRead() == res_1);
+        REQUIRE(out_buf_1->getCharsWritten() == res_1);
         
         REQUIRE(out_buf_2->getBufferContents().empty());
-        REQUIRE(out_buf_2->getCharsRead() == std::string("ACACA"));
-        REQUIRE(out_buf_2->getCharsWritten() == std::string("ACACA"));
+        std::string res_2 = std::string(input_size, 'A') + std::string(input_size, 'C');
+        REQUIRE(out_buf_2->getCharsRead() == res_2);
+        REQUIRE(out_buf_2->getCharsWritten() == res_2);
         
         REQUIRE(! (*in_stream) );
         REQUIRE(!in_stream->good());
         REQUIRE(in_stream->eof());
 
-        REQUIRE(out_stream_1->getContent() == std::string("BDBDB"));
-        REQUIRE(out_stream_2->getContent() == std::string("ACACA"));
+        REQUIRE(out_stream_1->getContent() == res_1);
+        REQUIRE(out_stream_2->getContent() == res_2);
     }
 }
 
 TEST_CASE("file hasher, with arbitrarily large number of buffers, "
             "correctly hashes ... ") {
     // TODO : Use the second constructor for this one.
+    fruit::Injector<IMockBlockBufferFactory> injector(getIMockBlockBufferFactory);
+    IMockBlockBufferFactory bufferFac(injector);
+    
+    // Initialize the hasher
+    unsigned blocksize = 10;
+    unsigned num_outputs = 10;
+    FileHasher hasher(num_outputs, blocksize, bufferFac);
+    
+    // Initialize the streams
+    fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
+    fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
+    fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
+    
+    std::vector<IOutputStream*> dests;
+    IStringInputStream *in_stream(input_injector);
+    unsigned input_size = blocksize;
+    std::string input = std::string(input_size, 'A')
+                        + std::string(input_size, 'B')
+                        + std::string(input_size, 'C')
+                        + std::string(input_size, 'D');
+    REQUIRE(input.length() == 4 * blocksize);
+    
+    in_stream->setContent(input);
+    REQUIRE(in_stream->getContent() == input);
+
+    
+    IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
+    REQUIRE(out_stream_1 != out_stream_2);
+    dests.push_back(out_stream_1);
+    dests.push_back(out_stream_2);
+    hasher.testHash(*in_stream, dests);
+    
+    /*
+    printf("in_stream_content: %s\n", in_stream->getContent().c_str());
+    printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
+    printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
+    */
+    
+    REQUIRE(! (*in_stream) );
+    REQUIRE(!in_stream->good());
+    REQUIRE(in_stream->eof());
+
+    std::string res_1 = std::string(blocksize, 'B') + std::string(blocksize, 'D');
+    REQUIRE(out_stream_1->getContent() == res_1);
+    
+    std::string res_2 = std::string(blocksize, 'A') + std::string(blocksize, 'C');
+    REQUIRE(out_stream_2->getContent() == res_2);
 
 }
