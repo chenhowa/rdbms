@@ -84,10 +84,14 @@ void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) 
         assert(dests[i]->good());
     }
     
+    //printf("preparing to hash\n");
+    
     // While there is more data to read
-    while(!in.good()) {
+    while(in.good()) {
+        //printf("data to read\n");
         // If the input block is empty, read in a block.
         if(this->input->isEmpty()) {
+            //printf("reading from stream\n");
             this->input->read(in);
         }
         
@@ -98,8 +102,12 @@ void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) 
             // read the next piece of data.
             this->input->write(1, &data);
             
+            //printf("data read: %i\n", data);
+            
             // hash the next piece of data.
             hash_val = ((int)data) % this->numOutputBuffers();
+            
+            //printf("hash val: %i\n", hash_val);
             
             // Send the data to the correct output buffer.
             this->outputs[hash_val]->read(1, &data);
@@ -107,9 +115,15 @@ void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) 
             // Check if the output buffer is full. If it is,
             // then flush it, before continuing.
             if(this->outputs[hash_val]->isFull()) {
+                //printf("full buffer: writing\n");
                 this->outputs[hash_val]->write(*(dests[hash_val]));
             }
         }
+    }
+    
+    //Once the data is exhausted, flush the buffers.
+    for(unsigned i = 0; i < dests.size(); i++) {
+        this->outputs[i]->write(*dests[i]);
     }
 }
 

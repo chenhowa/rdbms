@@ -1,9 +1,8 @@
 #include "catch.hpp"
 #include "file_hash.hpp"
-#include "i_block_buffer.hpp"
-#include "block_buffer.hpp"
-
-#include <fakeit.hpp>
+#include "mock_block_buffer.hpp"
+#include "string_output_stream.hpp"
+#include "string_input_stream.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -12,119 +11,192 @@
 #include <string>
 #include <sstream>
 
-using namespace fakeit;
-
-
-fruit::Component<IBlockBufferFactory> getMockBlockBufferComponent() {
-    static Mock<IBlockBuffer> mock;
-    return fruit::createComponent()
-        .registerFactory<std::unique_ptr<IBlockBuffer>(fruit::Assisted<int>)>(
-            [](int blocksize) {
-                return std::unique_ptr<IBlockBuffer>( &mock.get() );
-            });
-} 
-
-
-fruit::Component<FileHasherFactory> getTestFileHasherComponent() {
-    return fruit::createComponent()
-        .replace(getBlockBufferComponent).with(getMockBlockBufferComponent)
-        .install(_getFileHasherComponent);
-}
 
 
 TEST_CASE("file hasher initializes correctly with custom"
             "output number and blocksize") {
-    fruit::Injector<FileHasherFactory> injector(getTestFileHasherComponent);
-    FileHasherFactory fac(injector);
+    fruit::Injector<IMockBlockBufferFactory> injector(getIMockBlockBufferFactory);
+    IMockBlockBufferFactory bufferFac(injector);
     
-    int blocksize = 20;
-    int num_outputs = 5;
-    unique_ptr<FileHasher> hasher = fac(num_outputs, blocksize);
-    
-    REQUIRE(hasher->getBlockSize() == blocksize);
-    REQUIRE(hasher->numOutputBuffers() == num_outputs);
+    unsigned blocksize = 20;
+    unsigned num_outputs = 5;
+    FileHasher hasher(num_outputs, blocksize, bufferFac);    
+    REQUIRE(hasher.getBlockSize() == blocksize);
+    REQUIRE(hasher.numOutputBuffers() == num_outputs);
 }
 
-/*
-
-TEST_CASE("file hasher correctly hashes ... ") {
+TEST_CASE("file hasher, with small number of buffers, correctly hashes ... ") {
+    fruit::Injector<IMockBlockBufferFactory> injector(getIMockBlockBufferFactory);
+    IMockBlockBufferFactory bufferFac(injector);
     
-    Mock<IBlockBuffer> mock_in, mock_out_1, mock_out_2;
-    Fake(Dtor(mock_in));
-    When(OverloadedMethod(mock_in, read, int(std::istream&)))
-        .Do((
-            [](std::istream& in) -> int {
-                in.get();
-                return 5;
-            }
-        ));
-    Fake(OverloadedMethod(mock_in, read, int(int, char*)));
-    Fake(OverloadedMethod(mock_in, write, int(std::ostream&)));
-    When(OverloadedMethod(mock_in, write, int(int, char*)))
-        .Do(3_Times(
-            [](int num, char* dest) -> int {
-                *dest = 'A';
-                return 1;
-            }
-        ))
-        .Do(3_Times(
-            [](int num, char* dest) -> int {
-                *dest = 'B';
-                return 1;
-            }
-        ))
-        .Do(3_Times(
-            [](int num, char* dest) -> int {
-                *dest = 'C';
-                return 1;
-            }
-        ))
-        .Do(3_Times(
-            [](int num, char* dest) -> int {
-                *dest = 'D';
-                return 1;
-            }
-        ));
-    When(Method(mock_in, isEmpty)).Return(10_Times(true), false);
-        
-    Fake(Dtor(mock_out_1));
-    Fake(OverloadedMethod(mock_out_1, read, int(std::istream&)));
-    Fake(OverloadedMethod(mock_out_1, read, int(int, char*)));
-    Fake(OverloadedMethod(mock_out_1, write, int(std::ostream&)));
-    Fake(OverloadedMethod(mock_out_1, write, int(int, char*)));
-    When(Method(mock_out_1, isFull))
-        .Return(
-            2_Times(false), true,
-            2_Times(false), true
-        );
+    // Create buffers
+    unsigned blocksize = 10;
+    IMockBlockBuffer* in_buf = bufferFac(blocksize).release();
+    IMockBlockBuffer* out_buf_1 = bufferFac(blocksize).release();
+    IMockBlockBuffer* out_buf_2 = bufferFac(blocksize).release();
+    REQUIRE(in_buf->isEmpty());
+    REQUIRE(out_buf_1->isEmpty());
+    REQUIRE(out_buf_2->isEmpty());
     
-    Fake(Dtor(mock_out_2));
-    Fake(OverloadedMethod(mock_out_2, read, int(std::istream&)));
-    Fake(OverloadedMethod(mock_out_2, read, int(int, char*)));
-    Fake(OverloadedMethod(mock_out_2, write, int(std::ostream&)));
-    Fake(OverloadedMethod(mock_out_2, write, int(int, char*)));
-    When(Method(mock_out_2, isFull))
-        .Return(
-            2_Times(false), true,
-            2_Times(false), true
-        );
-    
-    FileHasher hasher(&mock_in.get(), &mock_out_1.get(), &mock_out_2.get());
-    
+    // Create hasher
+    FileHasher hasher(in_buf, out_buf_1, out_buf_2);
     REQUIRE(hasher.getBlockSize() == 0);
     REQUIRE(hasher.numOutputBuffers() == 2);
     
-    SECTION("simple file, simple function") {        
-        std::vector<std::ostream*> dests;
-        std::stringstream in, out_1, out_2;
-        dests.push_back(&out_1);
-        dests.push_back(&out_2);
-        hasher.testHash(in, dests);
+    SECTION("input smaller than blocksize... ") {   
+        fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
+        fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
+        fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
+        
+        std::vector<IOutputStream*> dests;
+        IStringInputStream *in_stream(input_injector);
+        std::string input("AABBCCDD");
+        
+        REQUIRE(input.length() < blocksize);
+        
+        in_stream->setContent(input);
+        REQUIRE(in_stream->getContent() == input);
+        
+        IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
+        REQUIRE(out_stream_1 != out_stream_2);
+        dests.push_back(out_stream_1);
+        dests.push_back(out_stream_2);
+        hasher.testHash(*in_stream, dests);
+        
+        /*
+        printf("in_stream_content: %s\n", in_stream->getContent().c_str());
+        printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
+        printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
+        printf("in_buf_content: %s\n", in_buf->getBufferContents().c_str());
+        printf("out_buf_1 content: %s\n", out_buf_1->getBufferContents().c_str());
+        printf("out_buf_2 content: %s\n", out_buf_2->getBufferContents().c_str());
+        */
+
+        
+        REQUIRE(in_buf->getBufferContents().empty());
+        REQUIRE(in_buf->getCharsRead() == std::string("AABBCCDD"));
+        REQUIRE(in_buf->getCharsWritten() == std::string("AABBCCDD"));
+        
+        REQUIRE(out_buf_1->getBufferContents().empty());
+        REQUIRE(out_buf_1->getCharsRead() == std::string("BBDD"));
+        REQUIRE(out_buf_1->getCharsWritten() == std::string("BBDD"));
+        
+        REQUIRE(out_buf_2->getBufferContents().empty());
+        REQUIRE(out_buf_2->getCharsRead() == std::string("AACC"));
+        REQUIRE(out_buf_2->getCharsWritten() == std::string("AACC"));
+        
+        REQUIRE(! (*in_stream) );
+        REQUIRE(!in_stream->good());
+        REQUIRE(in_stream->eof());
+
+        REQUIRE(out_stream_1->getContent() == std::string("BBDD"));
+        REQUIRE(out_stream_2->getContent() == std::string("AACC"));
+        
+        
     }
     
-    SECTION("simple file, complex function") {
+    
+    SECTION("input larger than buffer size") {
+        fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
+        fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
+        fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
         
+        std::vector<IOutputStream*> dests;
+        IStringInputStream *in_stream(input_injector);
+        std::string input("ABCDABCDABCDABCD");
+        
+        REQUIRE(input.length() > blocksize);
+        
+        in_stream->setContent(input);
+        REQUIRE(in_stream->getContent() == input);
+        
+        IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
+        REQUIRE(out_stream_1 != out_stream_2);
+        dests.push_back(out_stream_1);
+        dests.push_back(out_stream_2);
+        hasher.testHash(*in_stream, dests);
+        
+        /*
+        printf("in_stream_content: %s\n", in_stream->getContent().c_str());
+        printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
+        printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
+        printf("in_buf_content: %s\n", in_buf->getBufferContents().c_str());
+        printf("out_buf_1 content: %s\n", out_buf_1->getBufferContents().c_str());
+        printf("out_buf_2 content: %s\n", out_buf_2->getBufferContents().c_str());
+        */
+        
+        REQUIRE(in_buf->getBufferContents().empty());
+        REQUIRE(in_buf->getCharsRead() == input );
+        REQUIRE(in_buf->getCharsWritten() == input );
+        
+        REQUIRE(out_buf_1->getBufferContents().empty());
+        REQUIRE(out_buf_1->getCharsRead() == std::string("BDBDBDBD"));
+        REQUIRE(out_buf_1->getCharsWritten() == std::string("BDBDBDBD"));
+        
+        REQUIRE(out_buf_2->getBufferContents().empty());
+        REQUIRE(out_buf_2->getCharsRead() == std::string("ACACACAC"));
+        REQUIRE(out_buf_2->getCharsWritten() == std::string("ACACACAC"));
+        
+        REQUIRE(! (*in_stream) );
+        REQUIRE(!in_stream->good());
+        REQUIRE(in_stream->eof());
+
+        REQUIRE(out_stream_1->getContent() == std::string("BDBDBDBD"));
+        REQUIRE(out_stream_2->getContent() == std::string("ACACACAC"));
+    }
+    
+    SECTION("input the same size as buffer size") {
+        fruit::Injector<IStringOutputStream> output_injector_1(getIStringOutputStream);
+        fruit::Injector<IStringOutputStream> output_injector_2(getIStringOutputStream);
+        fruit::Injector<IStringInputStream> input_injector(getIStringInputStream);
+        
+        std::vector<IOutputStream*> dests;
+        IStringInputStream *in_stream(input_injector);
+        std::string input("ABCDABCDAB");
+        REQUIRE(input.length() == blocksize);
+        
+        in_stream->setContent(input);
+        REQUIRE(in_stream->getContent() == input);
+    
+        
+        IStringOutputStream *out_stream_1(output_injector_1), *out_stream_2(output_injector_2);
+        REQUIRE(out_stream_1 != out_stream_2);
+        dests.push_back(out_stream_1);
+        dests.push_back(out_stream_2);
+        hasher.testHash(*in_stream, dests);
+        
+        /*
+        printf("in_stream_content: %s\n", in_stream->getContent().c_str());
+        printf("out_stream_1 content: %s\n", out_stream_1->getContent().c_str());
+        printf("out_stream_2 content: %s\n", out_stream_2->getContent().c_str());
+        printf("in_buf_content: %s\n", in_buf->getBufferContents().c_str());
+        printf("out_buf_1 content: %s\n", out_buf_1->getBufferContents().c_str());
+        printf("out_buf_2 content: %s\n", out_buf_2->getBufferContents().c_str());
+        */
+        
+        REQUIRE(in_buf->getBufferContents().empty());
+        REQUIRE(in_buf->getCharsRead() == input );
+        REQUIRE(in_buf->getCharsWritten() == input );
+        
+        REQUIRE(out_buf_1->getBufferContents().empty());
+        REQUIRE(out_buf_1->getCharsRead() == std::string("BDBDB"));
+        REQUIRE(out_buf_1->getCharsWritten() == std::string("BDBDB"));
+        
+        REQUIRE(out_buf_2->getBufferContents().empty());
+        REQUIRE(out_buf_2->getCharsRead() == std::string("ACACA"));
+        REQUIRE(out_buf_2->getCharsWritten() == std::string("ACACA"));
+        
+        REQUIRE(! (*in_stream) );
+        REQUIRE(!in_stream->good());
+        REQUIRE(in_stream->eof());
+
+        REQUIRE(out_stream_1->getContent() == std::string("BDBDB"));
+        REQUIRE(out_stream_2->getContent() == std::string("ACACA"));
     }
 }
 
-*/
+TEST_CASE("file hasher, with arbitrarily large number of buffers, "
+            "correctly hashes ... ") {
+    // TODO : Use the second constructor for this one.
+
+}
