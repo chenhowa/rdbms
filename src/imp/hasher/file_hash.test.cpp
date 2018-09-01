@@ -32,49 +32,6 @@ fruit::Component<FileHasherFactory> getTestFileHasherComponent() {
 }
 
 
-
-bool verifyFilesAreSame(const std::string filename1, const std::string filename2, const std::string message) {
-    // printf("Testing: %s\n", message);
-    std::ifstream input_1(filename1, std::ifstream::binary);
-    std::ifstream input_2(filename2, std::ifstream::binary);
-    
-    if(!input_1) {
-        perror("input 1 not opened correctly");
-    }
-    
-    if(!input_2) {
-        perror("input 2 not opened correctly");
-    }
-    
-    char val_1;
-    char val_2;
-    
-    while(input_1 || input_2) {
-        val_1 = input_1.get();
-        val_2 = input_2.get();
-        /*
-         * This is more thorough instrumentation to see the values of each file.
-        printf("%i / ", val_1);
-        printf("%i\n", val_2);
-        */
-        
-        
-        if(val_1 != val_2) {
-            perror("values not equal\n");
-            printf("val_1: %i val_2: %i\n", val_1, val_2);
-            return false;
-        }
-        
-        if( (input_1 && !input_2) || (!input_1 && input_2) ) {
-            perror("streams not in same state");
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-
 TEST_CASE("file hasher initializes correctly with custom"
             "output number and blocksize") {
     fruit::Injector<FileHasherFactory> injector(getTestFileHasherComponent);
@@ -87,6 +44,8 @@ TEST_CASE("file hasher initializes correctly with custom"
     REQUIRE(hasher->getBlockSize() == blocksize);
     REQUIRE(hasher->numOutputBuffers() == num_outputs);
 }
+
+/*
 
 TEST_CASE("file hasher correctly hashes ... ") {
     
@@ -167,3 +126,5 @@ TEST_CASE("file hasher correctly hashes ... ") {
         
     }
 }
+
+*/

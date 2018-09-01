@@ -20,7 +20,7 @@ FileHasher::FileHasher() {
     
 }
 
-FileHasher::FileHasher(int num_outputs, IBlockBufferFactory fac) {
+FileHasher::FileHasher(unsigned num_outputs, IBlockBufferFactory fac) {
     this->blocksize = calcBlockSize();
     
     this->input = fac(this->blocksize);
@@ -32,7 +32,7 @@ FileHasher::FileHasher(int num_outputs, IBlockBufferFactory fac) {
     }
 }
 
-FileHasher::FileHasher(int num_outputs, int blocksize, IBlockBufferFactory fac) {
+FileHasher::FileHasher(unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac) {
     this->blocksize = blocksize;
     this->input = fac(this->blocksize);
     this->_numOutputBuffers = num_outputs;
@@ -76,7 +76,7 @@ FileHasher::~FileHasher() {
  * @@ post - data in input file will be hashed and sent to destinations.
  * 
  */
-void FileHasher::testHash(std::istream &in, std::vector<std::ostream*> &dests) {
+void FileHasher::testHash(IInputStream &in, std::vector<IOutputStream*> &dests) {
     assert(in.good());
     assert(dests.size() <= this->numOutputBuffers());
     assert(dests.size() > 0);
@@ -113,28 +113,28 @@ void FileHasher::testHash(std::istream &in, std::vector<std::ostream*> &dests) {
     }
 }
 
-fruit::Component<IFileHasherFactory> getFileHasherComponent() {
+fruit::Component<IFileHasherFactory> getIFileHasherFactory() {
     return fruit::createComponent()
-        .install(getBlockBufferComponent)
+        .install(getIBlockBufferFactory)
         .registerFactory<std::unique_ptr<IFileHasher>(
-                fruit::Assisted<int>, 
-                fruit::Assisted<int>, 
+                fruit::Assisted<unsigned>, 
+                fruit::Assisted<unsigned>, 
                 IBlockBufferFactory)> (
-            [](int num_outputs, int blocksize, IBlockBufferFactory fac) {
+            [](unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac) {
                 return std::unique_ptr<IFileHasher>(
                     new FileHasher(num_outputs, blocksize, fac)
                 );
             });
 }
 
-fruit::Component<FileHasherFactory> _getFileHasherComponent() {
+fruit::Component<FileHasherFactory> getFileHasher() {
     return fruit::createComponent()
-        .install(getBlockBufferComponent)
+        .install(getIBlockBufferFactory)
         .registerFactory<std::unique_ptr<FileHasher>(
-                fruit::Assisted<int>, 
-                fruit::Assisted<int>, 
+                fruit::Assisted<unsigned>, 
+                fruit::Assisted<unsigned>, 
                 IBlockBufferFactory)> (
-            [](int num_outputs, int blocksize, IBlockBufferFactory fac) {
+            [](unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac) {
                 return std::unique_ptr<FileHasher>(
                     new FileHasher(num_outputs, blocksize, fac)
                 );

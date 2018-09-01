@@ -18,10 +18,10 @@ class IBlockBuffer {
 public:
     virtual bool isEmpty() = 0;
     virtual bool isFull() = 0;
-    virtual int write(int num_bytes, char* dest) = 0;
-    virtual int write(IOutputStream &out) = 0;
-    virtual int read(int num_bytes, char* src) = 0;
-    virtual int read(IInputStream &in) = 0;
+    virtual unsigned write(unsigned num_bytes, char* dest) = 0;
+    virtual unsigned write(IOutputStream &out) = 0;
+    virtual unsigned read(unsigned num_bytes, char* src) = 0;
+    virtual unsigned read(IInputStream &in) = 0;
     virtual ~IBlockBuffer() { };
 };
 

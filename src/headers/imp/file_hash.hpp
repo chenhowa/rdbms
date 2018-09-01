@@ -5,7 +5,6 @@
 
 #include <fruit/fruit.h>
 #include <string>
-#include <iostream>
 #include <vector>
 #include <memory>
 #include "i_block_buffer.hpp"
@@ -14,7 +13,7 @@
 using namespace std;
 
 
-using IBlockBufferFactory = std::function<std::unique_ptr<IBlockBuffer>(int)>;
+using IBlockBufferFactory = std::function<std::unique_ptr<IBlockBuffer>(unsigned)>;
 
 class FileHasher : public IFileHasher {
     
@@ -25,22 +24,22 @@ private:
     unique_ptr<IBlockBuffer> input;
     unique_ptr< unique_ptr<IBlockBuffer>[]> outputs;
 public:
-    FileHasher(int num_outputs, IBlockBufferFactory fac);
-    FileHasher(int num_outputs, int blocksize, IBlockBufferFactory fac);
+    FileHasher(unsigned num_outputs, IBlockBufferFactory fac);
+    FileHasher(unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac);
     FileHasher(IBlockBuffer* in, IBlockBuffer* out_1, IBlockBuffer* out_2);
     unsigned numOutputBuffers();
     unsigned getBlockSize() override;
     ~FileHasher();
     
-    void testHash(std::istream &file, std::vector<std::ostream*> &dests);
+    void testHash(IInputStream &file, std::vector<IOutputStream*> &dests);
 };
 
-using IFileHasherFactory = std::function<std::unique_ptr<IFileHasher>(int, int)>;
-fruit::Component<IFileHasherFactory> getFileHasherComponent();
+using IFileHasherFactory = std::function<std::unique_ptr<IFileHasher>(unsigned, unsigned)>;
+fruit::Component<IFileHasherFactory> getIFileHasherFactory();
 
 
-using FileHasherFactory = std::function<std::unique_ptr<FileHasher>(int, int)>;
-fruit::Component<FileHasherFactory> _getFileHasherComponent();
+using FileHasherFactory = std::function<std::unique_ptr<FileHasher>(unsigned, unsigned)>;
+fruit::Component<FileHasherFactory> getFileHasher();
 
 
 

@@ -18,14 +18,17 @@ buffer_test = executable('buffer.test', buffer_src, include_directories : incdir
                 cpp_args : '-lfruit', link_args : '-lfruit')
 test('blockbuffer', buffer_test)
 
-# Build executable for testing FileHasher unit tests
-# file_hash_imps = ['src/imp/file_hash.cpp', 'src/imp/block_buffer.cpp']
-# test_mocks = []
-# test_file_hash_src = file_hash_imps + ['src/main.file_hash.test.cpp']
-# test_file_hash = executable('file_hash.test', test_file_hash_src,
-#                                    include_directories : incdir, 
-#                                    cpp_args : '-lfruit', link_args : '-lfruit')
-# test('filehash', test_file_hash)
+# Build executable for testing Hasher unit tests
+hash_root = 'src/imp/hasher/'
+hash_imps = [   hash_root + 'file_hash.cpp',
+                buffer_root + 'block_buffer.cpp'
+            ]
+hash_mocks = [ buffer_root + 'mock_block_buffer.cpp']
+hash_src = hash_imps + hash_mocks + ['src/main.file_hash.test.cpp'] + utils_src
+hash_test = executable('file_hash.test', hash_src,
+                                   include_directories : incdir, 
+                                   cpp_args : '-lfruit', link_args : '-lfruit')
+test('hasher', hash_test)
 
 # Build executable for PRODUCT
 # imps = buffer_imps + file_hash_imps

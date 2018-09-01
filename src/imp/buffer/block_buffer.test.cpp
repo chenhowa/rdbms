@@ -18,7 +18,7 @@ char* makeBuffer(int size, char value) {
 }
 
 TEST_CASE("BlockBuffer: Read from RAM ... ") {
-    fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+    fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
     BlockBufferFactory bufferFactory(injector);
     
     int buf_size = 100;
@@ -59,7 +59,7 @@ TEST_CASE("BlockBuffer: Read from RAM ... ") {
 }
 
 TEST_CASE("BlockBuffer: Write to RAM ... ") {
-    fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+    fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
     BlockBufferFactory bufferFactory(injector);
     int buf_size = 100;
     std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
@@ -112,7 +112,7 @@ TEST_CASE("BlockBuffer: Write to RAM ... ") {
 
 TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
     // Create a half-full BlockBuffer
-    fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+    fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
     BlockBufferFactory bufferFactory(injector);
     
     int buf_size = 100;
@@ -167,7 +167,7 @@ TEST_CASE("BlockBuffer: Stream Reading ... ") {
     (test_stream)->setContent(test_vals);
     
     SECTION("read with buffer smaller than stream... ") {
-        fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+        fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length - 2;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
@@ -205,7 +205,7 @@ TEST_CASE("BlockBuffer: Stream Reading ... ") {
     }
     
     SECTION("read with buffer larger than stream...") {
-        fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+        fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length + 1;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
@@ -223,7 +223,7 @@ TEST_CASE("BlockBuffer: Stream Reading ... ") {
     }
     
     SECTION("read with buffer same size as stream...") {
-        fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+        fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
         BlockBufferFactory bufferFactory(injector);
         int buf_size = test_length;
         std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
@@ -257,7 +257,7 @@ TEST_CASE("BlockBuffer: Stream Writing ... ") {
     // Create a BlockBuffer to write things to the stream
     int buf_size = 11;
     
-    fruit::Injector<BlockBufferFactory> injector(getTestingBlockBufferComponent);
+    fruit::Injector<BlockBufferFactory> injector(getBlockBufferFactory);
     BlockBufferFactory bufferFactory(injector);
     std::unique_ptr<BlockBuffer> buffer = bufferFactory(buf_size);
     

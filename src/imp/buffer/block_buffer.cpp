@@ -15,7 +15,7 @@ BlockBuffer::BlockBuffer() {
     
 }
 
-BlockBuffer::BlockBuffer( int blocksize) :
+BlockBuffer::BlockBuffer( unsigned blocksize) :
         start_byte(0),
         end_byte(0),
         count(0),
@@ -36,11 +36,11 @@ bool BlockBuffer::isFull() {
 // Buffer overflows are possible with the write. Be
 // careful to allocate enough memory for the destination!
 // returns number of bytes written
-int BlockBuffer::write(int num_bytes, char* dest) {
-    int bytes_to_write = count >= num_bytes ? 
+unsigned BlockBuffer::write(unsigned num_bytes, char* dest) {
+    unsigned bytes_to_write = count >= num_bytes ? 
                             num_bytes : count;
     
-    for(int i = 0; i < bytes_to_write; i++) {
+    for(unsigned i = 0; i < bytes_to_write; i++) {
         *dest = buffer[start_byte];
         start_byte = start_byte == max_bytes - 1 ? 0 : start_byte + 1;
         dest += 1;
@@ -59,9 +59,9 @@ int BlockBuffer::write(int num_bytes, char* dest) {
 //          the size of the BlockBuffer
 // @ post - BlockBuffer will be empty.
 // @ return - returns number of bytes written.
-int BlockBuffer::write(IOutputStream &out) {
+unsigned BlockBuffer::write(IOutputStream &out) {
     assert(out.good());
-    int bytes_written = 0;
+    unsigned bytes_written = 0;
     
     while(count > 0) {
         out.put(buffer[start_byte]);
@@ -82,11 +82,11 @@ int BlockBuffer::write(IOutputStream &out) {
 // Buffer overflows are possible with the write. Be
 // careful to allocate enough memory for the destination!
 // returns number of bytes written
-int BlockBuffer::read(int num_bytes, char* src) {
-    int bytes_remaining = max_bytes - count;
-    int bytes_to_read = bytes_remaining >= num_bytes ?
+unsigned BlockBuffer::read(unsigned num_bytes, char* src) {
+    unsigned bytes_remaining = max_bytes - count;
+    unsigned bytes_to_read = bytes_remaining >= num_bytes ?
                           num_bytes : bytes_remaining;
-    for(int i = 0; i < bytes_to_read; i++) {
+    for(unsigned i = 0; i < bytes_to_read; i++) {
         buffer[end_byte] = *src;
         src += 1;
         end_byte = end_byte == max_bytes - 1 ? 0 : end_byte + 1;
@@ -107,11 +107,11 @@ int BlockBuffer::read(int num_bytes, char* src) {
 //          read to be full
 // @ post - BlockBuffer will be full.
 // @ return - returns number of bytes read.
-int BlockBuffer::read(IInputStream &in) {
+unsigned BlockBuffer::read(IInputStream &in) {
     // assert(in.is_open());
     assert(in.good());
     
-    int bytes_read = 0;
+    unsigned bytes_read = 0;
     
     // Read until full, or until the file ends.
     while(count < max_bytes && in) {
@@ -133,14 +133,14 @@ int BlockBuffer::read(IInputStream &in) {
     return bytes_read;
 }
 
-bool BlockBuffer::bufferEquals(int num_bytes, char* src) {
+bool BlockBuffer::bufferEquals(unsigned num_bytes, char* src) {
     if(num_bytes != count) {
         // Cannot be equal if not same number of bytes
         return false;
     }
     
-    for(int i = 0; i < count; i++) {
-        int index = (start_byte + i) % max_bytes;
+    for(unsigned i = 0; i < count; i++) {
+        unsigned index = (start_byte + i) % max_bytes;
         if(buffer[index] != *(src + i)) {
             return false;
         }
@@ -151,39 +151,39 @@ bool BlockBuffer::bufferEquals(int num_bytes, char* src) {
 }
 
 void BlockBuffer::print() {
-    for(int i = 0; i < max_bytes; i++) {
+    for(unsigned i = 0; i < max_bytes; i++) {
         putchar(buffer[i]);
     }
 }
 
-bool BlockBuffer::isStart(int index) {
+bool BlockBuffer::isStart(unsigned index) {
     return index == this->start_byte;
 }
 
-bool BlockBuffer::isEnd(int index) {
+bool BlockBuffer::isEnd(unsigned index) {
     return index == this->end_byte;
 }
 
-bool BlockBuffer::isCount(int c) {
+bool BlockBuffer::isCount(unsigned c) {
     return c == this->count;
 }
 
 BlockBuffer::~BlockBuffer() {}
 
 
-fruit::Component<IBlockBufferFactory> getBlockBufferComponent() {
+fruit::Component<IBlockBufferFactory> getIBlockBufferFactory() {
     return fruit::createComponent()
         .bind<IBlockBuffer, BlockBuffer>()
-        .registerFactory<std::unique_ptr<IBlockBuffer>(fruit::Assisted<int>)>(
-            [](int blocksize) {
+        .registerFactory<std::unique_ptr<IBlockBuffer>(fruit::Assisted<unsigned>)>(
+            [](unsigned blocksize) {
             return std::unique_ptr<IBlockBuffer>(new BlockBuffer(blocksize));
         });
 }
 
-fruit::Component<BlockBufferFactory> getTestingBlockBufferComponent() {
+fruit::Component<BlockBufferFactory> getBlockBufferFactory() {
     return fruit::createComponent()
-        .registerFactory<std::unique_ptr<BlockBuffer>(fruit::Assisted<int>)>(
-            [](int blocksize) {
+        .registerFactory<std::unique_ptr<BlockBuffer>(fruit::Assisted<unsigned>)>(
+            [](unsigned blocksize) {
             return std::unique_ptr<BlockBuffer>(new BlockBuffer(blocksize));
         });
 }

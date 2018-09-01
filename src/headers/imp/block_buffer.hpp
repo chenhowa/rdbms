@@ -18,20 +18,20 @@ using namespace std;
 class BlockBuffer : public IBlockBuffer {
 private:
     BlockBuffer();
-    int start_byte;
-    int end_byte;
-    int count;
-    int max_bytes;
+    unsigned start_byte;
+    unsigned end_byte;
+    unsigned count;
+    unsigned max_bytes;
     unique_ptr<char[]> buffer;
 public:
-    BlockBuffer( int blocksize);
+    BlockBuffer( unsigned blocksize);
     bool isEmpty() override;
     bool isFull() override;
     
     // Buffer overflows are possible with the write. Be
     // careful to allocate enough memory for the destination!
     // returns number of bytes written
-    int write(int num_bytes, char* dest) override;
+    unsigned write(unsigned num_bytes, char* dest) override;
     
     // This function attempts to write up to a block of bytes
     // to the output file associated with the ofstream.
@@ -42,12 +42,12 @@ public:
     //          the size of the BlockBuffer
     // @ post - BlockBuffer will be empty.
     // @ return - returns number of bytes written.
-    int write(IOutputStream &out) override;
+    unsigned write(IOutputStream &out) override;
     
     // Buffer overflows are possible with the write. Be
     // careful to allocate enough memory for the destination!
     // returns number of bytes written
-    int read(int num_bytes, char* src) override;
+    unsigned read(unsigned num_bytes, char* src) override;
     
     // This function attempts to read up to a block of bytes
     // from the input file associated with the ifstream.
@@ -60,26 +60,26 @@ public:
     //          read to be full
     // @ post - BlockBuffer will be full.
     // @ return - returns number of bytes read.
-    int read(IInputStream &in) override;
+    unsigned read(IInputStream &in) override;
     
-    bool bufferEquals(int num_bytes, char* src);
+    bool bufferEquals(unsigned num_bytes, char* src);
     
     void print();
     
-    bool isStart(int index);
+    bool isStart(unsigned index);
     
-    bool isEnd(int index);
+    bool isEnd(unsigned index);
     
-    bool isCount(int c);
+    bool isCount(unsigned c);
     
     virtual ~BlockBuffer();
 };
 
-using IBlockBufferFactory = std::function<std::unique_ptr<IBlockBuffer>(int)>;
-fruit::Component<IBlockBufferFactory> getBlockBufferComponent();
+using IBlockBufferFactory = std::function<std::unique_ptr<IBlockBuffer>(unsigned)>;
+fruit::Component<IBlockBufferFactory> getIBlockBufferFactory();
 
-using BlockBufferFactory = std::function<std::unique_ptr<BlockBuffer>(int)>;
-fruit::Component<BlockBufferFactory> getTestingBlockBufferComponent();
+using BlockBufferFactory = std::function<std::unique_ptr<BlockBuffer>(unsigned)>;
+fruit::Component<BlockBufferFactory> getBlockBufferFactory();
 
 
 #endif //BLOCK_BUFFER_HPP
