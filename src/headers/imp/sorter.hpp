@@ -23,9 +23,14 @@ public:
     Sorter(unsigned num_bufs, IBlockBufferFactory fac);
     Sorter(unsigned num_bufs, unsigned blocksize, IBlockBufferFactory fac);
     virtual unsigned getNumWorkers();
+    virtual unsigned getBlockSize();
     virtual void sort(IInputStream& in, IOutputStream& out) override;
     virtual ~Sorter() { };
 };
+
+
+using ISorterFactory = std::function<std::unique_ptr<ISorter>(unsigned, unsigned) >;
+fruit::Component<ISorterFactory> getISorterFactory();
 
 
 #endif //FILE_SORT_HPP

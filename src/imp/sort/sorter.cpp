@@ -2,6 +2,7 @@
 
 
 #include "sorter.hpp"
+#include "block_buffer.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -42,6 +43,27 @@ unsigned Sorter::getNumWorkers() {
     return this->_numWorkers;
 }
 
+unsigned Sorter::getBlockSize() {
+    return this->blocksize;
+}
+
 void Sorter::sort(IInputStream& in, IOutputStream& out) {
-    
+    // THIS WILL BE TOUGH. YOU'LL HAVE TO
+    // LOCK SOME RESOURCES TO DO THE SORT IN PARALLEL
+}
+
+
+using namespace fruit;
+Component<ISorterFactory> getISorterFactory() {
+    return createComponent()
+        .install(getIBlockBufferFactory)
+        .registerFactory<std::unique_ptr<ISorter>(
+                fruit::Assisted<unsigned>, 
+                fruit::Assisted<unsigned>, 
+                IBlockBufferFactory)> (
+            [](unsigned num_workers, unsigned blocksize, IBlockBufferFactory fac) {
+                return std::unique_ptr<ISorter>(
+                    new Sorter(num_workers, blocksize, fac)
+                );
+            });
 }
