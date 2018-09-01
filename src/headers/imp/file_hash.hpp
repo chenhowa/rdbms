@@ -38,9 +38,6 @@ using IFileHasherFactory = std::function<std::unique_ptr<IFileHasher>(unsigned, 
 fruit::Component<IFileHasherFactory> getIFileHasherFactory();
 
 
-using FileHasherFactory = std::function<std::unique_ptr<FileHasher>(unsigned, unsigned)>;
-fruit::Component<FileHasherFactory> getFileHasher();
-
 
 
 #endif //FILE_HASH_HPP

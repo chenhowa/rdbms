@@ -127,16 +127,3 @@ fruit::Component<IFileHasherFactory> getIFileHasherFactory() {
             });
 }
 
-fruit::Component<FileHasherFactory> getFileHasher() {
-    return fruit::createComponent()
-        .install(getIBlockBufferFactory)
-        .registerFactory<std::unique_ptr<FileHasher>(
-                fruit::Assisted<unsigned>, 
-                fruit::Assisted<unsigned>, 
-                IBlockBufferFactory)> (
-            [](unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac) {
-                return std::unique_ptr<FileHasher>(
-                    new FileHasher(num_outputs, blocksize, fac)
-                );
-            });
-}
