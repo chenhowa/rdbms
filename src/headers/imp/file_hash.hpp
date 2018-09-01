@@ -22,7 +22,7 @@ private:
     unsigned blocksize;
     unsigned _numOutputBuffers;
     unique_ptr<IBlockBuffer> input;
-    unique_ptr< unique_ptr<IBlockBuffer>[]> outputs;
+    vector<unique_ptr<IBlockBuffer>> outputs;
 public:
     FileHasher(unsigned num_outputs, IBlockBufferFactory fac);
     FileHasher(unsigned num_outputs, unsigned blocksize, IBlockBufferFactory fac);

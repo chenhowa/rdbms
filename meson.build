@@ -30,6 +30,18 @@ hash_test = executable('file_hash.test', hash_src,
                                    cpp_args : '-lfruit', link_args : '-lfruit')
 test('hasher', hash_test)
 
+# Build executable for testing Sorter unit tests
+sort_root = 'src/imp/sort/'
+sort_imps = [   sort_root + 'sorter.cpp',
+                buffer_root + 'block_buffer.cpp'
+            ]
+sort_mocks = [ buffer_root + 'mock_block_buffer.cpp'] 
+sort_src = sort_imps + sort_mocks + ['src/main.sort.test.cpp'] + utils_src
+sort_test = executable('sorter.test', sort_src,
+                            include_directories: incdir,
+                            cpp_args : '-lfruit', link_args : '-lfruit')
+test('sorter', sort_test)
+
 # Build executable for PRODUCT
 # imps = buffer_imps + file_hash_imps
 # src = imps + ['src/main.cpp']

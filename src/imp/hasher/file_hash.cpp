@@ -25,10 +25,9 @@ FileHasher::FileHasher(unsigned num_outputs, IBlockBufferFactory fac) {
     
     this->input = fac(this->blocksize);
     this->_numOutputBuffers = num_outputs;
-    this->outputs.reset(new unique_ptr<IBlockBuffer>[this->_numOutputBuffers]);
     
     for(unsigned i = 0; i < this->_numOutputBuffers; i++) {
-        this->outputs[i] = fac(this->blocksize);
+        this->outputs.push_back( fac(this->blocksize) );
     }
 }
 
@@ -36,10 +35,9 @@ FileHasher::FileHasher(unsigned num_outputs, unsigned blocksize, IBlockBufferFac
     this->blocksize = blocksize;
     this->input = fac(this->blocksize);
     this->_numOutputBuffers = num_outputs;
-    this->outputs.reset( new unique_ptr<IBlockBuffer>[this->_numOutputBuffers] );
     
     for(unsigned i = 0; i < this->_numOutputBuffers; i++) {
-        this->outputs[i] = fac(this->blocksize);
+        this->outputs.push_back( fac(this->blocksize) );
     }
 }
 
@@ -50,9 +48,8 @@ FileHasher::FileHasher(IBlockBuffer* in, IBlockBuffer* out_1, IBlockBuffer* out_
     this->blocksize = 0;
     this->input.reset(in);
     this->_numOutputBuffers = 2;
-    this->outputs.reset(new unique_ptr<IBlockBuffer>[2]);
-    this->outputs[0].reset(out_1);
-    this->outputs[1].reset(out_2);
+    this->outputs.push_back(std::unique_ptr<IBlockBuffer>(out_1) );
+    this->outputs.push_back(std::unique_ptr<IBlockBuffer>(out_2) );
 }
 
 unsigned FileHasher::numOutputBuffers() {
