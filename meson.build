@@ -6,7 +6,9 @@ stream_root = 'src/imp/stream/'
 utils_src = [   stream_root + 'file_input_stream.cpp',
                 stream_root + 'string_input_stream.cpp',
                 stream_root + 'file_output_stream.cpp',
-                stream_root + 'string_output_stream.cpp'
+                stream_root + 'string_output_stream.cpp',
+                stream_root + 'mock_file_input_stream.cpp',
+                stream_root + 'mock_file_output_stream.cpp'
             ]
 
 # Build executable for BlockBuffer unit tests

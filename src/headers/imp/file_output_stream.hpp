@@ -34,4 +34,7 @@ public:
 
 fruit::Component<IFileOutputStream> getIFileOutputStream();
 
+using IFileOutputStreamFactory = std::function<std::unique_ptr<IFileOutputStream>()>;
+fruit::Component<IFileOutputStreamFactory> getIFileOutputStreamFactory();
+
 #endif // FILE_OUTPUT_STREAM_HPP

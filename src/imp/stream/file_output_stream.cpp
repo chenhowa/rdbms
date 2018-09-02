@@ -68,3 +68,12 @@ Component<IFileOutputStream> getIFileOutputStream () {
     return createComponent()
         .bind<IFileOutputStream, FileOutputStream>();
 }
+
+Component<IFileOutputStreamFactory> getIFileOutputStreamFactory() {
+    return createComponent()
+        .registerFactory<std::unique_ptr<IFileOutputStream>() >(
+            []() {
+                return std::unique_ptr<IFileOutputStream>(new FileOutputStream() );
+            }
+        );
+}

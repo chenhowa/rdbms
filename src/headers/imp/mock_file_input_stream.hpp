@@ -1,21 +1,21 @@
 
 
 
-#ifndef FILE_INPUT_STREAM_HPP
-#define FILE_INPUT_STREAM_HPP
+#ifndef MOCK_FILE_INPUT_STREAM_HPP
+#define MOCK_FILE_INPUT_STREAM_HPP
 
-#include "i_file_input_stream.hpp"
-#include <fstream>
-
+#include "i_mock_file_input_stream.hpp"
+#include <sstream>
 #include <fruit/fruit.h>
 
-
-class FileInputStream : public IFileInputStream {
+class MockFileInputStream : public IMockFileInputStream {
 private:
-    std::fstream input;
-
+    std::istringstream buffer;
+    bool is_open_flag;
 public:
-    INJECT(FileInputStream() );
+    INJECT( MockFileInputStream() );
+    virtual void setContent(const std::string &s) override;
+    virtual std::string getContent() override;
     virtual void open(const std::string& filename,
                 std::fstream::ios_base::openmode mode) override;
     virtual bool is_open() const override;
@@ -31,14 +31,14 @@ public:
     virtual explicit operator bool() const override;
     virtual void clear(std::iostream::iostate state) override;
     
+    virtual ~MockFileInputStream() { }
 };
 
-fruit::Component<IFileInputStream> getIFileInputStream();
+fruit::Component<IMockFileInputStream> getIMockFileInputStream();
 
-//fruit::Component<IInputStream> getInputStream_File();
-
-using IFileInputStreamFactory = std::function<std::unique_ptr<IFileInputStream>()>;
-fruit::Component<IFileInputStreamFactory> getIFileInputStreamFactory();
+using IMockFileInputStreamFactory = std::function<std::unique_ptr<IMockFileInputStream>()>;
+fruit::Component<IMockFileInputStreamFactory> getIMockFileInputStreamFactory();
 
 
-#endif // FILE_INPUT_STREAM_HPP
+
+#endif // MOCK_FILE_INPUT_STREAM_HPP

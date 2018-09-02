@@ -63,12 +63,22 @@ void FileInputStream::clear(std::iostream::iostate state) {
 }
 
 using namespace fruit;
-Component<IFileInputStream> getFileInputStream() {
+Component<IFileInputStream> getIFileInputStream() {
     return createComponent()
         .bind<IFileInputStream, FileInputStream>();
 }
-
+/*
 Component<IInputStream> getInputStream_File() {
     return createComponent()
         .bind<IInputStream, FileInputStream>();
+}
+*/
+
+Component<IFileInputStreamFactory> getIFileInputStreamFactory() {
+    return createComponent()
+        .registerFactory<std::unique_ptr<IFileInputStream>() >(
+            []() {
+                return std::unique_ptr<IFileInputStream>( new FileInputStream() );
+            }
+        );
 }
