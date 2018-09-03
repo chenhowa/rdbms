@@ -13,6 +13,7 @@ public:
     virtual std::string getCharsRead() = 0;
     virtual std::string getCharsWritten() = 0;
     virtual std::string getBufferContents() = 0;
+    virtual unsigned getBlockSize() = 0;
     
     virtual ~IMockBlockBuffer() { }
 };

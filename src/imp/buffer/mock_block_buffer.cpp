@@ -94,6 +94,11 @@ std::string MockBlockBuffer::getBufferContents() {
     return contents;
 }
 
+unsigned MockBlockBuffer::getBlockSize() {
+    return blocksize;
+}
+
+
 
 using namespace fruit;
 fruit::Component<IMockBlockBufferFactory> getIMockBlockBufferFactory() {

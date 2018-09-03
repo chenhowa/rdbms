@@ -32,6 +32,11 @@ bool StringInputStream::eof() const {
 bool StringInputStream::bad() const {
     return input->bad();
 }
+
+bool StringInputStream::fail() const {
+    return input->fail();
+}
+
 bool StringInputStream::operator! () const {
     return !*input;
 }

@@ -37,17 +37,34 @@ bool BlockBuffer::isFull() {
 // careful to allocate enough memory for the destination!
 // returns number of bytes written
 unsigned BlockBuffer::write(unsigned num_bytes, char* dest) {
-    unsigned bytes_to_write = count >= num_bytes ? 
-                            num_bytes : count;
-    
+    unsigned bytes_to_write = calcNumBytesToWrite(num_bytes);
     for(unsigned i = 0; i < bytes_to_write; i++) {
-        *dest = buffer[start_byte];
-        start_byte = start_byte == max_bytes - 1 ? 0 : start_byte + 1;
+        writeStartByte(dest);
+        incrementStart();
         dest += 1;
-        count -= 1;
+        decrementCount();
     }
     
     return bytes_to_write;
+}
+
+unsigned BlockBuffer::calcNumBytesToWrite(unsigned num_bytes) {
+    return count >= num_bytes ? num_bytes : count;
+}
+
+void BlockBuffer::writeStartByte(char* dest) {
+    *dest = buffer[start_byte];
+}
+
+void BlockBuffer::incrementStart() {
+    start_byte = (start_byte + 1) % max_bytes;
+    assert(start_byte >= 0);
+    assert(start_byte < max_bytes);
+}
+
+void BlockBuffer::decrementCount() {
+    count -= 1;
+    assert(count >= 0);
 }
 
 // This function attempts to write up to a block of bytes
@@ -64,9 +81,10 @@ unsigned BlockBuffer::write(IOutputStream &out) {
     unsigned bytes_written = 0;
     
     while(count > 0) {
-        out.put(buffer[start_byte]);
-        count -= 1;
-        start_byte = (start_byte + 1) % max_bytes;
+        writeStartByte(out);
+        decrementCount();
+        incrementStart();
+        bytes_written += 1;
     }
     
     if(out) {
@@ -79,21 +97,49 @@ unsigned BlockBuffer::write(IOutputStream &out) {
     return bytes_written;
 }
 
+void BlockBuffer::writeStartByte(IOutputStream &out) {
+    out.put(buffer[start_byte]);
+}
+
 // Buffer overflows are possible with the write. Be
 // careful to allocate enough memory for the destination!
 // returns number of bytes written
 unsigned BlockBuffer::read(unsigned num_bytes, char* src) {
-    unsigned bytes_remaining = max_bytes - count;
-    unsigned bytes_to_read = bytes_remaining >= num_bytes ?
-                          num_bytes : bytes_remaining;
+    unsigned bytes_to_read = calcNumBytesToRead(num_bytes);
     for(unsigned i = 0; i < bytes_to_read; i++) {
-        buffer[end_byte] = *src;
+        readToEndByte(*src);
         src += 1;
-        end_byte = end_byte == max_bytes - 1 ? 0 : end_byte + 1;
-        count += 1;
+        incrementEnd();
+        incrementCount();
     }
     
     return bytes_to_read;
+}
+
+unsigned BlockBuffer::calcNumBytesToRead(unsigned num_bytes) {
+    unsigned bytes_remaining = calcNumEmptyBytes();
+    return bytes_remaining >= num_bytes ?
+                          num_bytes : bytes_remaining;
+}
+
+unsigned BlockBuffer::calcNumEmptyBytes() {
+    assert(max_bytes >= count);
+    return max_bytes - count;
+}
+
+void BlockBuffer::readToEndByte(char data) {
+    buffer[end_byte] = data;
+}
+
+void BlockBuffer::incrementEnd() {
+    end_byte = (end_byte + 1) % max_bytes;
+    assert(end_byte >= 0);
+    assert(end_byte < max_bytes);
+}
+
+void BlockBuffer::incrementCount() {
+    count += 1;
+    assert(count <= max_bytes);
 }
 
 // This function attempts to read up to a block of bytes
@@ -108,26 +154,38 @@ unsigned BlockBuffer::read(unsigned num_bytes, char* src) {
 // @ post - BlockBuffer will be full.
 // @ return - returns number of bytes read.
 unsigned BlockBuffer::read(IInputStream &in) {
-    // assert(in.is_open());
     assert(in.good());
     
+    unsigned bytes_read = readAsMuchAsPossible(in);
+    
+    if(in) {
+        // If input stream is not exhausted, then
+        // the buffer must be full
+        assert(start_byte == end_byte);
+        assert(count == max_bytes);
+    } else {
+        // Else input stream was exhausted, so we could
+        // not fill the buffer.
+        assert(count < max_bytes);
+    }
+    
+    return bytes_read;
+}
+
+unsigned BlockBuffer::readAsMuchAsPossible(IInputStream &in) {
     unsigned bytes_read = 0;
     
     // Read until full, or until the file ends.
-    while(count < max_bytes && in) {
+    while(count < max_bytes && in.good() ) {
         char val = (char)in.get();
         if(!in) {
             break; // if we have reached the end of file, stop.
         }
-        buffer[end_byte] = val;
-        count++;
-        end_byte = (end_byte + 1) % max_bytes;
+        
+        readToEndByte(val);
+        incrementCount();
+        incrementEnd();
         bytes_read += 1;
-    }
-    
-    if(in) {
-        assert(start_byte == end_byte);
-        assert(count == max_bytes);
     }
     
     return bytes_read;
@@ -139,14 +197,16 @@ bool BlockBuffer::bufferEquals(unsigned num_bytes, char* src) {
         return false;
     }
     
+    return allBytesMatchBuffer(num_bytes, src);
+}
+
+bool BlockBuffer::allBytesMatchBuffer(unsigned num_bytes, char* src) {
     for(unsigned i = 0; i < count; i++) {
         unsigned index = (start_byte + i) % max_bytes;
         if(buffer[index] != *(src + i)) {
             return false;
         }
-        
     }
-    
     return true;
 }
 
@@ -169,7 +229,6 @@ bool BlockBuffer::isCount(unsigned c) {
 }
 
 BlockBuffer::~BlockBuffer() {}
-
 
 fruit::Component<IBlockBufferFactory> getIBlockBufferFactory() {
     return fruit::createComponent()

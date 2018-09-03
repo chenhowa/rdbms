@@ -50,6 +50,10 @@ bool FileInputStream::bad() const {
     return this->input.bad();
 }
 
+bool FileInputStream::fail() const {
+    return this->input.fail();
+}
+
 bool FileInputStream::operator !() const {
     return !(this->input);
 }

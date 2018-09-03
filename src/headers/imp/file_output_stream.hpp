@@ -20,6 +20,7 @@ public:
     virtual bool good() const override;
     virtual bool eof() const override;
     virtual bool bad() const override;
+    virtual bool fail() const override;
     virtual bool operator! () const override;
     virtual explicit operator bool() const override;
     virtual void clear(std::iostream::iostate state) override;

@@ -3,13 +3,34 @@ project('demo-dbms', 'cpp', default_options : ['cpp_std=c++11'])
 incdir = include_directories('src/headers/', 'src/headers/imp', 'src/headers/interfaces')
 #imps = ['src/imp/file_sort.cpp']
 stream_root = 'src/imp/stream/'
+fs_root = 'src/imp/filesystem/'
 utils_src = [   stream_root + 'file_input_stream.cpp',
                 stream_root + 'string_input_stream.cpp',
                 stream_root + 'file_output_stream.cpp',
                 stream_root + 'string_output_stream.cpp',
                 stream_root + 'mock_file_input_stream.cpp',
-                stream_root + 'mock_file_output_stream.cpp'
+                stream_root + 'mock_file_output_stream.cpp',
+                fs_root + 'filesystem.cpp'
             ]
+# Build Executable for file system test.
+fs_imps = [fs_root + 'filesystem.cpp']
+fs_mocks = []
+fs_src = fs_imps + fs_mocks + ['src/main.filesystem.test.cpp'] + utils_src
+fs_test = executable('fs.test', fs_src, include_directories : incdir,
+                            cpp_args : '-lfruit', link_args : '-lfruit')
+test('fs', fs_test)
+
+
+#Build Executable for mock file input stream test.
+
+# Build Executable for mock file output stream test.
+mock_file_stream_imps = [stream_root + 'mock_file_output_stream.cpp' ]
+mock_file_stream_mocks = [fs_root + 'filesystem.cpp' ]
+mock_file_stream_src = mock_file_stream_imps + mock_file_stream_mocks + ['src/main.mock_file_stream.test.cpp' ] + utils_src
+mock_file_stream_test = executable('mock_file_streams.test', mock_file_stream_src,
+                            include_directories : incdir,
+                            cpp_args : '-lfruit', link_args : '-lfruit')
+test('mock_file_streams', mock_file_stream_test)
 
 # Build executable for BlockBuffer unit tests
 buffer_root = 'src/imp/buffer/'

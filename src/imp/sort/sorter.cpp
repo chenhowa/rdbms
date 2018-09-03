@@ -56,17 +56,19 @@ Sorter::Sorter(unsigned num_bufs, unsigned blocksize, IBlockBufferFactory fac,
     assert(out_streams.size() == workers.size());
 }
 
-Sorter::Sorter(std::vector<IBlockBuffer*> &buffers,
-        std::vector<IFileInputStream*> &readers, std::vector<IFileOutputStream*> &writers ) {
-    assert(buffers.size() >= 3);
-    assert(buffers.size() - 1 == readers.size());
-    assert(buffers.size() - 1 == writers.size());
+Sorter::Sorter(IBlockBuffer* stage_buffer, 
+                            std::vector<IBlockBuffer*> &buffers,
+                            std::vector<IFileInputStream*> &readers, 
+                            std::vector<IFileOutputStream*> &writers ) {
+    assert(buffers.size() >= 2);
+    assert(buffers.size() == readers.size());
+    assert(buffers.size() == writers.size());
     
     this->blocksize = 0;
-    this->_numWorkers = buffers.size() - 1;
-    this->stage.reset(buffers[buffers.size()]);
+    this->_numWorkers = buffers.size();
+    this->stage.reset(stage_buffer);
     
-    for(unsigned i = 0; i < readers.size(); i++) {
+    for(unsigned i = 0; i < buffers.size(); i++) {
         workers.push_back(std::unique_ptr<IBlockBuffer>(buffers[i]) );
         in_streams.push_back(std::unique_ptr<IFileInputStream>(readers[i]) );
         out_streams.push_back(std::unique_ptr<IFileOutputStream>(writers[i]) );

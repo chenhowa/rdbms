@@ -9,7 +9,7 @@ MockFileInputStream::MockFileInputStream() :
         buffer(), is_open_flag(false) {
 }
 
-
+   
 void MockFileInputStream::setContent(const std::string &s) { 
     buffer.str(s);
 }
@@ -61,12 +61,16 @@ bool MockFileInputStream::bad() const {
     return buffer.bad();
 }
 
+bool MockFileInputStream::fail() const {
+    return buffer.fail();
+}
+
 bool MockFileInputStream::operator! () const {
     return !(buffer);
 }
 
 MockFileInputStream::operator bool() const { 
-    bool(buffer);
+    return bool(buffer);
 }
 
 void MockFileInputStream::clear(std::iostream::iostate state) {

@@ -32,6 +32,8 @@ public:
     virtual std::string getCharsRead() override;
     virtual std::string getCharsWritten() override;
     virtual std::string getBufferContents() override;
+    virtual unsigned getBlockSize() override;
+
 };
 
 using IMockBlockBufferFactory = std::function<std::unique_ptr<IMockBlockBuffer>(unsigned)>;

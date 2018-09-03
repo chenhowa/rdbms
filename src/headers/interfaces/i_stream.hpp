@@ -11,6 +11,7 @@ class IStream {
 public:
     virtual bool good() const = 0;
     virtual bool eof() const = 0;
+    virtual bool fail() const = 0;
     virtual bool bad() const = 0;
     virtual bool operator! () const = 0;
     virtual explicit operator bool() const = 0;

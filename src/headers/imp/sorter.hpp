@@ -33,7 +33,10 @@ public:
                 IFileInputStreamFactory in_fac, IFileOutputStreamFactory out_fac);
     Sorter(unsigned num_bufs, unsigned blocksize, IBlockBufferFactory fac,
                 IFileInputStreamFactory in_fac, IFileOutputStreamFactory out_fac);
-    Sorter(std::vector<IBlockBuffer*> &buffers, std::vector<IFileInputStream*> &readers, std::vector<IFileOutputStream*> &writers );
+    Sorter(IBlockBuffer* stage_buffer,
+                    std::vector<IBlockBuffer*> &buffers, 
+                    std::vector<IFileInputStream*> &readers, 
+                    std::vector<IFileOutputStream*> &writers );
     virtual unsigned getNumWorkers();
     virtual unsigned getBlockSize();
     virtual void sort(IInputStream& in, IOutputStream& out) override;

@@ -5,13 +5,23 @@
 #include "i_mock_file_output_stream.hpp"
 #include <sstream>
 #include <fruit/fruit.h>
+#include "i_filesystem.hpp"
 
 class MockFileOutputStream : public IMockFileOutputStream {
 private:
-    std::ostringstream buffer;
+    MockFileOutputStream();
+    std::string *current_file;
+    IFileSystem *filesystem;
+    std::string::iterator current_iterator;
     bool is_open_flag;
+    bool good_bit;
+    bool eof_bit;
+    bool fail_bit;
+    bool bad_bit;
+    std::ios_base::openmode mode;
+    
 public:
-    INJECT( MockFileOutputStream() );
+    MockFileOutputStream(IFileSystem *fs);
     virtual std::string getContent() override;
     virtual void setContent(std::string &s) override;
     virtual void open(const std::string& filename,
@@ -24,16 +34,27 @@ public:
     virtual bool good() const override;
     virtual bool eof() const override;
     virtual bool bad() const override;
+    virtual bool fail() const override;
+
     virtual bool operator! () const override;
     virtual explicit operator bool() const override;
-    virtual void clear(std::iostream::iostate state) override;
+    // This function will only be used to clear state to GOOD.
+    virtual void clear(std::iostream::iostate state = std::iostream::goodbit) override;
     
     
     virtual ~MockFileOutputStream() { };
+    
+private:
+    bool isTrunc(std::ios_base::openmode mode);
+    bool isBinary(std::ios_base::openmode mode);
+    bool isIn(std::ios_base::openmode mode);
+    bool isOut(std::ios_base::openmode mode);
+    bool isAte(std::ios_base::openmode mode);
+    bool isApp(std::ios_base::openmode mode);
+
+
 
 };
-
-fruit::Component<IMockFileOutputStream> getIMockFileOutputStream();
 
 using IMockFileOutputStreamFactory = std::function<std::unique_ptr<IMockFileOutputStream>()>;
 fruit::Component<IMockFileOutputStreamFactory> getIMockFileOutputStreamFactory();

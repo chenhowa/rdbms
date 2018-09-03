@@ -73,6 +73,21 @@ public:
     bool isCount(unsigned c);
     
     virtual ~BlockBuffer();
+    
+private:
+    unsigned calcNumBytesToWrite(unsigned num_bytes);
+    void writeStartByte(char* dest);
+    void incrementStart();
+    void decrementCount();
+    void writeStartByte(IOutputStream &out);
+    unsigned calcNumEmptyBytes();
+    unsigned calcNumBytesToRead(unsigned num_bytes);
+    void readToEndByte(char data);
+    void incrementEnd();
+    void incrementCount();
+    unsigned readAsMuchAsPossible(IInputStream &in);
+    bool allBytesMatchBuffer(unsigned num_bytes, char* src);
+
 };
 
 using IBlockBufferFactory = std::function<std::unique_ptr<IBlockBuffer>(unsigned)>;

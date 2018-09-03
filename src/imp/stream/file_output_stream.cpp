@@ -38,6 +38,10 @@ bool FileOutputStream::bad() const {
     return output->bad();
 }
 
+bool FileOutputStream::fail() const {
+    return output->fail();
+}
+
 bool FileOutputStream::operator! () const {
     return !*output;
 }

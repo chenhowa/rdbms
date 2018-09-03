@@ -32,6 +32,11 @@ public:
     ~FileHasher();
     
     void testHash(IInputStream &file, std::vector<IOutputStream*> &dests);
+    
+private:
+    void readToInputBlockIfEmpty(IInputStream &in);
+    void hashAndWriteInputBlockToOutput(std::vector<IOutputStream*> &dests);
+    void flushAnyRemainingInputToOutput(std::vector<IOutputStream*> &dests);
 };
 
 using IFileHasherFactory = std::function<std::unique_ptr<IFileHasher>(unsigned, unsigned)>;

@@ -22,6 +22,10 @@ bool StringOutputStream::bad() const {
     return output->bad();
 }
 
+bool StringOutputStream::fail() const {
+    return output->fail();
+}
+
 bool StringOutputStream::operator! () const {
     return !(*output);
 }
