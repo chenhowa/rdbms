@@ -32,6 +32,14 @@ std::string MockFileOutputStream::getContent() {
 void MockFileOutputStream::setContent(std::string &s) {
     if(current_file != nullptr) {
         *current_file = std::string(s);
+        
+        if (isTrunc(mode) || isAte(mode) || isApp(mode)) {
+            current_iterator = current_file->end();
+        } else {
+            // Other modes default to writing to front.
+            current_iterator = current_file->begin();
+        }
+        
     } else {
         throw "Tried to set content when no file was set";
     }
@@ -40,11 +48,13 @@ void MockFileOutputStream::setContent(std::string &s) {
 void MockFileOutputStream::open(const std::string& filename,
             std::fstream::ios_base::openmode openmode) {
     if(good()) {
-        if(is_open_flag) {
+        if(is_open_flag || !filesystem->fileExists(filename) ) {
             // If already open, operation fails.
+            // If file doesn't exist, operation fails.
             fail_bit = true;
             good_bit = false;
         } else {
+            assert(filesystem->fileExists(filename));
             // open in correct mode.
             is_open_flag = true;
             current_file = &( (*filesystem) [filename] );
@@ -125,6 +135,7 @@ IOutputStream& MockFileOutputStream::put(char c) {
         if(current_iterator == current_file->end()) {
             // If iterator points to end of file, insert new character
             current_file->insert(current_iterator, c);
+            current_iterator++;
             assert(current_iterator == current_file->end());
         } else {
             // If not pointing to end of file, simply overwrite existing
@@ -150,6 +161,7 @@ IOutputStream& MockFileOutputStream::write(unsigned n, const char* s) {
                 for(unsigned i = 0; i < n; i++) {
                     current_file->insert(current_iterator, *s);
                     s++;
+                    current_iterator++;
                     assert(current_iterator == current_file->end());
                 }
             } else {
@@ -168,6 +180,7 @@ IOutputStream& MockFileOutputStream::write(unsigned n, const char* s) {
                 while(bytes_remaining > 0 && current_iterator == current_file->end() ) {
                     current_file->insert(current_iterator, *s);
                     s++;
+                    current_iterator++;
                     bytes_remaining--;
                     
                     assert(current_iterator == current_file->end() );
@@ -188,26 +201,34 @@ IOutputStream& MockFileOutputStream::flush() {
 
 bool MockFileOutputStream::good() const {
     // When good bit is set, no others should be.
-    assert(good_bit != eof_bit);
-    assert(good_bit != fail_bit);
-    assert(good_bit != bad_bit);
+    if(good_bit) {
+        assert(good_bit != eof_bit);
+        assert(good_bit != fail_bit);
+        assert(good_bit != bad_bit);
+    }
     
     return good_bit;
 }
 
 bool MockFileOutputStream::eof() const {
-    assert(good_bit != eof_bit);
+    if(good_bit) {
+        assert(good_bit != eof_bit);
+    }
     
     return eof_bit;
 }
 
 bool MockFileOutputStream::bad() const {
-    assert(good_bit != bad_bit);
+    if(good_bit) {
+        assert(good_bit != bad_bit);
+    }
     return bad_bit;
 }
 
 bool MockFileOutputStream::fail() const {
-    assert(good_bit != fail_bit);
+    if(good_bit) {
+        assert(good_bit != fail_bit);
+    }
     return fail_bit || bad_bit;
 }
 
