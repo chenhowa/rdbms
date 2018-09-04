@@ -5,15 +5,23 @@
 #define MOCK_FILE_INPUT_STREAM_HPP
 
 #include "i_mock_file_input_stream.hpp"
-#include <sstream>
 #include <fruit/fruit.h>
+#include "i_filesystem.hpp"
 
 class MockFileInputStream : public IMockFileInputStream {
 private:
-    std::istringstream buffer;
+    MockFileInputStream() = default;
+    std::string *current_file;
+    IFileSystem *filesystem;
+    std::string::iterator current_iterator;
     bool is_open_flag;
+    bool good_bit;
+    bool eof_bit;
+    bool fail_bit;
+    bool bad_bit;
+    std::ios_base::openmode mode;
 public:
-    INJECT( MockFileInputStream() );
+    MockFileInputStream(IFileSystem* fs);
     virtual void setContent(const std::string &s) override;
     virtual std::string getContent() override;
     virtual void open(const std::string& filename,
@@ -33,9 +41,16 @@ public:
     virtual void clear(std::iostream::iostate state) override;
     
     virtual ~MockFileInputStream() { }
-};
 
-fruit::Component<IMockFileInputStream> getIMockFileInputStream();
+private:
+    bool isTrunc(std::ios_base::openmode mode);
+    bool isBinary(std::ios_base::openmode mode);
+    bool isIn(std::ios_base::openmode mode);
+    bool isOut(std::ios_base::openmode mode);
+    bool isAte(std::ios_base::openmode mode);
+    bool isApp(std::ios_base::openmode mode);
+
+};
 
 using IMockFileInputStreamFactory = std::function<std::unique_ptr<IMockFileInputStream>()>;
 fruit::Component<IMockFileInputStreamFactory> getIMockFileInputStreamFactory();

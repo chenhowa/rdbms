@@ -3,7 +3,6 @@
 #define MOCK_FILE_OUTPUT_STREAM_HPP
 
 #include "i_mock_file_output_stream.hpp"
-#include <sstream>
 #include <fruit/fruit.h>
 #include "i_filesystem.hpp"
 
