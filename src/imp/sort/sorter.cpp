@@ -9,6 +9,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <boost/filesystem.hpp>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <cstdio>
 
 unsigned calcBlockSize() {
     struct stat s;
@@ -85,8 +90,45 @@ unsigned Sorter::getBlockSize() {
 }
 
 void Sorter::sort(IInputStream& in, IOutputStream& out) {
-    // THIS WILL BE TOUGH. YOU'LL HAVE TO
-    // LOCK SOME RESOURCES TO DO THE SORT IN PARALLEL
+    // While more input remains.
+    unsigned nextWorker = 0;
+    while(in.good()) {
+        // read in next batch of bytes.
+        unsigned bytes_read = this->stage->read(in);
+        if(bytes_read == 0) {
+            // If didn't read any bytes, we are
+            // done; EOF has been reached.
+            break;
+        }
+        
+        // Send bytes to next worker, for potentially
+        // parallel writing to temporary file.
+        this->stage->write( *(this->workers[nextWorker]) );
+        
+        // In that next worker, somehow sort all the
+        // bytes in place according to some STRATEGY.
+        unsigned size = this->workers[nextWorker]->getBlockSize() + 1;
+        char* temp = new char[size];
+        memset(temp, '\0', size);
+        this->workers[nextWorker]->write(size - 1, temp);
+        assert(this->workers[nextWorker]->isEmpty());
+        std::string sort_stage(temp);
+        std::sort(sort_stage.begin(), sort_stage.end());
+        std::strcpy(temp, sort_stage.c_str() );
+        this->workers[nextWorker]->read(sort_stage.length(), temp);
+        
+        // this->workers[nextWorker]->write(out);
+        // WRONG : REFACTOR AND TEST.
+        // REFACTOR COMMON IMPLEMENTATION OUT AS WELL.
+        delete [] temp;
+        
+        // TO DO : Once sorted, write the bytes to a temporary file,
+        // and save the temporary file's HANDLE or 
+        // LOCATION.
+        std::string path = unique_path();
+        
+        nextWorker += 1;
+    }
 }
 
 

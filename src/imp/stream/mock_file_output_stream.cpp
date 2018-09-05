@@ -6,7 +6,15 @@
 #include <assert.h>
 #include "filesystem.hpp"
 
-MockFileOutputStream::MockFileOutputStream() {
+extern IFileSystem *g_filesystem;
+
+MockFileOutputStream::MockFileOutputStream() :
+        current_file(nullptr), filesystem(g_filesystem), 
+        is_open_flag(false),
+        good_bit(true), eof_bit(false),
+        fail_bit(false),
+        bad_bit(false)
+                {
     
 }
 
@@ -248,12 +256,29 @@ void MockFileOutputStream::clear(std::iostream::iostate state) {
     eof_bit = false;
 }
 
+IFileSystem* MockFileOutputStream::getFileSystem() {
+    return filesystem;
+}
+
+void MockFileOutputStream::setFileSystem(IFileSystem *fs) {
+    filesystem = fs;
+}
+
 
 using namespace fruit;
 
 Component<IMockFileOutputStreamFactory> getIMockFileOutputStreamFactory() {
     return createComponent()
-        .install(getIFileSystem)
+        .registerFactory<std::unique_ptr<IMockFileOutputStream>() >(
+            []() {
+                return std::unique_ptr<IMockFileOutputStream>(new MockFileOutputStream() );
+            }
+        ); 
+}
+
+Component<Required<IFileSystem>, 
+        IMockFileOutputStreamFactory>  getIMockFileOutputStreamFactory_req_fs() {
+    return createComponent()
         .registerFactory<std::unique_ptr<IMockFileOutputStream>(
             IFileSystem*) >(
             [](IFileSystem* fs) {
@@ -261,4 +286,18 @@ Component<IMockFileOutputStreamFactory> getIMockFileOutputStreamFactory() {
             }
         ); 
 }
+
+/*
+Component<IFileOutputStreamFactory> getIFileOutputStream() {
+    return createComponent()
+        .install(getIFileSystem)
+        .registerFactory<std::unique_ptr<IFileOutputStream>(
+            IFileSystem*) > (
+            [](IFileSystem* fs) {
+                return std::unique_ptr<IFileOutputStream>(new MockFileOutputStream(fs)) ;
+            }
+        );
+}*/
+
+
 

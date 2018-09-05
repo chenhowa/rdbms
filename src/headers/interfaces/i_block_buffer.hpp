@@ -20,8 +20,10 @@ public:
     virtual bool isFull() = 0;
     virtual unsigned write(unsigned num_bytes, char* dest) = 0;
     virtual unsigned write(IOutputStream &out) = 0;
+    virtual unsigned write(IBlockBuffer &dest) = 0;
     virtual unsigned read(unsigned num_bytes, char* src) = 0;
     virtual unsigned read(IInputStream &in) = 0;
+    virtual unsigned getBlockSize() = 0;
     virtual ~IBlockBuffer() { };
 };
 

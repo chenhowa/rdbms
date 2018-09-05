@@ -23,6 +23,17 @@ bool MockBlockBuffer::isFull() {
     return buffer.size() == blocksize;
 }
 
+unsigned MockBlockBuffer::write(IBlockBuffer &dest) {
+    unsigned bytes_written = 0;
+    while(!dest.isFull() && !this->isEmpty() ) {
+        dest.read(1, &buffer.front());
+        charsWritten += buffer.front();
+        buffer.pop_front();
+        bytes_written += 1;
+    }
+    return bytes_written;
+}
+
 unsigned MockBlockBuffer::write(unsigned num_bytes, char* dest) {
     unsigned bytes_written = 0;
     while(!isEmpty() && bytes_written < num_bytes) {

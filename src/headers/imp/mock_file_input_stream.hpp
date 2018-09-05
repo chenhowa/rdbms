@@ -10,7 +10,6 @@
 
 class MockFileInputStream : public IMockFileInputStream {
 private:
-    MockFileInputStream() = default;
     std::string *current_file;
     IFileSystem *filesystem;
     std::string::iterator current_iterator;
@@ -21,6 +20,7 @@ private:
     bool bad_bit;
     std::ios_base::openmode mode;
 public:
+    MockFileInputStream();
     MockFileInputStream(IFileSystem* fs);
     virtual void setContent(const std::string &s) override;
     virtual std::string getContent() override;
@@ -41,6 +41,10 @@ public:
     virtual void clear(std::iostream::iostate state) override;
     
     virtual ~MockFileInputStream() { }
+public:
+    virtual IFileSystem* getFileSystem() override;
+    virtual void setFileSystem(IFileSystem *fs) override;
+
 
 private:
     bool isTrunc(std::ios_base::openmode mode);
@@ -55,6 +59,7 @@ private:
 using IMockFileInputStreamFactory = std::function<std::unique_ptr<IMockFileInputStream>()>;
 fruit::Component<IMockFileInputStreamFactory> getIMockFileInputStreamFactory();
 
-
+fruit::Component<fruit::Required<IFileSystem>, 
+                IMockFileInputStreamFactory>  getIMockFileInputStreamFactory_req_fs();
 
 #endif // MOCK_FILE_INPUT_STREAM_HPP

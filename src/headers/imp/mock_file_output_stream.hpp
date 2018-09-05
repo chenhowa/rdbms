@@ -8,7 +8,6 @@
 
 class MockFileOutputStream : public IMockFileOutputStream {
 private:
-    MockFileOutputStream();
     std::string *current_file;
     IFileSystem *filesystem;
     std::string::iterator current_iterator;
@@ -20,6 +19,7 @@ private:
     std::ios_base::openmode mode;
     
 public:
+    MockFileOutputStream();
     MockFileOutputStream(IFileSystem *fs);
     virtual std::string getContent() override;
     virtual void setContent(std::string &s) override;
@@ -42,6 +42,10 @@ public:
     
     
     virtual ~MockFileOutputStream() { };
+
+public:
+    virtual IFileSystem* getFileSystem() override;
+    virtual void setFileSystem(IFileSystem *fs) override;
     
 private:
     bool isTrunc(std::ios_base::openmode mode);
@@ -57,5 +61,11 @@ private:
 
 using IMockFileOutputStreamFactory = std::function<std::unique_ptr<IMockFileOutputStream>()>;
 fruit::Component<IMockFileOutputStreamFactory> getIMockFileOutputStreamFactory();
+
+fruit::Component<fruit::Required<IFileSystem>, 
+        IMockFileOutputStreamFactory>  getIMockFileOutputStreamFactory_req_fs();
+
+// using IFileOutputStreamFactory = std::function<std::unique_ptr<IFileOutputStream>()>;
+// fruit::Component<IFileOutputStreamFactory> getIFileOutputStream();
 
 #endif // MOCK_FILE_OUTPUT_STREAM_HPP

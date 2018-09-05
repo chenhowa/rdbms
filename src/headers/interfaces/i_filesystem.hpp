@@ -16,6 +16,9 @@ public:
     virtual bool renameFile(const  std::string &name,
                      const std::string &newName) = 0;
     virtual unsigned getCharCount( const std::string &name) = 0;
+    virtual std::string& get(const std::string &name) = 0;
+    virtual bool set(const std::string &name, const std::string &val) = 0;
+    virtual void reset() = 0;
     
     virtual ~IFileSystem() { };
 };

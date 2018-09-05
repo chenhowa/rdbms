@@ -20,7 +20,11 @@ unsigned FileSystem::fileCount() {
 }
 
 std::string& FileSystem::operator[] (const std::string &name) {
-    return fs[name];
+    if(fileExists(name)) {
+        return fs[name];
+    }
+    
+    throw "File does not exist";
 }
 
 bool FileSystem::createFile(const std::string &name) {
@@ -66,6 +70,24 @@ unsigned FileSystem::getCharCount(const std::string &name) {
     
     return 0;
 }
+
+std::string& FileSystem::get(const std::string &name) {
+    return (*this)[name];
+}
+
+bool FileSystem::set(const std::string &name, const std::string &val) {
+    if(fileExists(name)) {
+        (*this)[name] = val;
+        return true;
+    }
+    
+    return false;
+}
+
+void FileSystem::reset() {
+    fs = std::map<std::string, std::string>();
+}
+
 
 using namespace fruit;
 Component<IFileSystem> getIFileSystem() {

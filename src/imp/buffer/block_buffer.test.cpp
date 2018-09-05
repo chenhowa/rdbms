@@ -158,6 +158,38 @@ TEST_CASE("BlockBuffer integration: Reading and Writing to RAM ... ") {
     }
 }
 
+TEST_CASE("BlockBuffer: Write to another buffer ... ") {
+    char test_len = 15;
+    char* test_val = makeBuffer(test_len, 'A');
+    
+    BlockBuffer b1(15);
+    BlockBuffer b2(10);
+    
+    SECTION("write to larger buffer") {
+        b2.read(test_len, test_val);
+        REQUIRE(b2.bufferEquals(10, test_val));
+        
+        unsigned bytes_written = b2.write(b1);
+        REQUIRE(bytes_written == 10);
+        REQUIRE(b2.isEmpty());
+        REQUIRE(!b1.isFull());
+        REQUIRE(b1.bufferEquals(10, test_val));
+    }
+    
+    SECTION("write to smaller buffer ") {
+        b1.read(test_len, test_val);
+        REQUIRE(b1.bufferEquals(15, test_val));
+        REQUIRE(b1.isFull());
+        
+        unsigned bytes_written = b1.write(b2);
+        REQUIRE(bytes_written == 10);
+        REQUIRE(!b1.isEmpty());
+        REQUIRE(b1.bufferEquals(5, test_val));
+        REQUIRE(b2.isFull());
+        REQUIRE(b2.bufferEquals(10, test_val));
+    }
+}
+
 TEST_CASE("BlockBuffer: Stream Reading ... ") {    
     // Create test file containing only the capital alphabet letters.
     int test_length = 26;

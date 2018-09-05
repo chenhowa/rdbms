@@ -33,6 +33,18 @@ bool BlockBuffer::isFull() {
     return count == max_bytes;
 }
 
+unsigned BlockBuffer::write(IBlockBuffer &dest) {
+    unsigned bytes_written = 0;
+    while(!dest.isFull() && !this->isEmpty()) {
+        dest.read(1, &(buffer[start_byte]) );
+        this->incrementStart();
+        this->decrementCount();
+        bytes_written += 1;
+    }
+    
+    return bytes_written;
+}
+
 // Buffer overflows are possible with the write. Be
 // careful to allocate enough memory for the destination!
 // returns number of bytes written
@@ -227,6 +239,11 @@ bool BlockBuffer::isEnd(unsigned index) {
 bool BlockBuffer::isCount(unsigned c) {
     return c == this->count;
 }
+
+unsigned BlockBuffer::getBlockSize() {
+    return max_bytes;
+}
+
 
 BlockBuffer::~BlockBuffer() {}
 

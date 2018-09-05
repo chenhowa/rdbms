@@ -44,6 +44,8 @@ public:
     // @ return - returns number of bytes written.
     unsigned write(IOutputStream &out) override;
     
+    virtual unsigned write(IBlockBuffer &dest) override;
+    
     // Buffer overflows are possible with the write. Be
     // careful to allocate enough memory for the destination!
     // returns number of bytes written
@@ -71,6 +73,9 @@ public:
     bool isEnd(unsigned index);
     
     bool isCount(unsigned c);
+    
+    virtual unsigned getBlockSize() override;
+
     
     virtual ~BlockBuffer();
     

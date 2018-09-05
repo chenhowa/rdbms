@@ -23,6 +23,9 @@ public:
     virtual bool renameFile(const std::string &name,
                     const std::string &newName) override;
     virtual unsigned getCharCount(const std::string &name) override;
+    virtual std::string& get(const std::string &name) override;
+    virtual bool set(const std::string &name, const std::string &val) override;
+    virtual void reset() override;
     
     virtual ~FileSystem() { };
 

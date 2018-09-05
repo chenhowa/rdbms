@@ -43,7 +43,19 @@ TEST_CASE("File System correctly executes ... ") {
         REQUIRE(fs.renameFile(name1, name2) == true);
         REQUIRE(fs.fileCount() == 1);
         REQUIRE( (!fs.fileExists(name1) && fs.fileExists(name2) ) == true);
-    }       
+    }
+
+    SECTION("file getting and setting") {
+        std::string name("default");
+        std::string val("hello");
+        fs.createFile(name);
+        REQUIRE(fs.get(name) == std::string());
+        REQUIRE(fs.set(name, val) == true);
+        REQUIRE(fs.get(name) == val);
+        
+        REQUIRE_THROWS(fs.get("random"));
+        REQUIRE(fs.set("random", "value") == false);
+    }
     
 }
 

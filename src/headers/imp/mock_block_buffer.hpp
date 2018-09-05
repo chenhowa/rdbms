@@ -22,6 +22,7 @@ public:
     MockBlockBuffer(unsigned size);
     virtual bool isEmpty() override;
     virtual bool isFull() override;
+    virtual unsigned write(IBlockBuffer &dest) override;
     virtual unsigned write(unsigned num_bytes, char* dest) override;
     virtual unsigned write(IOutputStream &out) override;
     virtual unsigned read(unsigned num_bytes, char* src) override;

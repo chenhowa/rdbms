@@ -6,6 +6,16 @@
 #include <assert.h>
 #include "filesystem.hpp"
 
+extern IFileSystem *g_filesystem;
+
+MockFileInputStream::MockFileInputStream() :
+    current_file(nullptr), filesystem(g_filesystem),
+    is_open_flag(false), good_bit(true),
+    eof_bit(false), fail_bit(false),
+    bad_bit(false)
+                {
+    
+}
 
 MockFileInputStream::MockFileInputStream(IFileSystem *fs) : 
     current_file(nullptr), filesystem(fs),
@@ -106,7 +116,7 @@ bool MockFileInputStream::is_open() const {
 }
 
 void MockFileInputStream::close() {
-    if(good()) {
+    if(!fail()) {
         if(!is_open_flag) {
             // If already closed, operation fails
             fail_bit = true;
@@ -114,6 +124,10 @@ void MockFileInputStream::close() {
         } else {
             is_open_flag = false;
             current_file = nullptr;
+            good_bit = true;
+            fail_bit = false;
+            eof_bit = false;
+            bad_bit = false;
         }
     } else {
         // Nothing happens. Non-good streams
@@ -127,6 +141,8 @@ char MockFileInputStream::get() {
         if(current_iterator == current_file->end()) {
             // If iterator points to end of file, return EOF
             assert(current_iterator == current_file->end());
+            eof_bit = true;
+            good_bit = false;
             return char(-1);
         } else {
             // If not pointing to end of file, return single
@@ -148,6 +164,8 @@ char MockFileInputStream::peek() {
         if(current_iterator == current_file->end()) {
             // If iterator points to end of file, return EOF
             assert(current_iterator == current_file->end());
+            good_bit = false;
+            eof_bit = true;
             return char(-1);
         } else {
             // If not pointing to end of file, return single
@@ -165,21 +183,33 @@ char MockFileInputStream::peek() {
 
 IInputStream& MockFileInputStream::ignore( unsigned n, char delim) {
     unsigned i = 0;
-    while(i < n && (*current_iterator) != delim ) {
+    while(i < n && (*current_iterator) != delim && current_iterator != current_file->end()) {
         current_iterator++;
         i++;
     }
+    
+    if(i < n && (*current_iterator) != delim) {
+        good_bit = false;
+        eof_bit = true;
+    }
+    
     return *this;
 }
 
 IInputStream& MockFileInputStream::read(unsigned n, char* s) {
     unsigned i = 0;
-    while(i < n) {
+    while(i < n && current_iterator != current_file->end()) {
         *s = *current_iterator;
         current_iterator++;
         s++;
         i++;
     }
+    
+    if(i < n) {
+        good_bit = false;
+        eof_bit = true;
+    }
+    
     return *this;
 }
 
@@ -232,16 +262,33 @@ void MockFileInputStream::clear(std::iostream::iostate state) {
     eof_bit = false;
 }
 
+IFileSystem* MockFileInputStream::getFileSystem() {
+    return filesystem;
+}
+
+void MockFileInputStream::setFileSystem(IFileSystem *fs) {
+    filesystem = fs;
+}
+
 using namespace fruit;
 
 Component<IMockFileInputStreamFactory> getIMockFileInputStreamFactory() {
     return createComponent()
-        .install(getIFileSystem)
+        .registerFactory<std::unique_ptr<IMockFileInputStream>() >(
+            []() {
+                return std::unique_ptr<IMockFileInputStream>(new MockFileInputStream() );
+            }
+        ); 
+}
+
+Component<Required<IFileSystem>, 
+        IMockFileInputStreamFactory>  getIMockFileInputStreamFactory_req_fs() {
+    return createComponent()
         .registerFactory<std::unique_ptr<IMockFileInputStream>(
             IFileSystem*) >(
             [](IFileSystem* fs) {
                 return std::unique_ptr<IMockFileInputStream>(new MockFileInputStream(fs) );
             }
-        ); 
+        );
 }
 
