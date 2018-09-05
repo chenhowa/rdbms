@@ -41,6 +41,13 @@ public:
     virtual unsigned getBlockSize();
     virtual void sort(IInputStream& in, IOutputStream& out) override;
     virtual ~Sorter() { };
+private:
+    void writeStageToWorker(unsigned workerIndex);
+    void sortInputIntoSortedFiles(IInputStream& in, std::vector<std::string> &files);
+    virtual void sortWorker(unsigned workerIndex);
+    void writeWorkerToNewTempFileAndStore(unsigned workerIndex,
+                                std::vector<std::string> &files);
+    
 };
 
 
