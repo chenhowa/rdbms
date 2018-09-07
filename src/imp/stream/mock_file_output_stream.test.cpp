@@ -93,14 +93,11 @@ TEST_CASE("Writing with just one file stream ... ") {
         REQUIRE(fs->fileCount() == 0);
     }
     
-    SECTION("perform invalid operations") {
+    SECTION("try to open non-existent file for writing") {
         std::string invalid_name("oops.txt");
         out.open(invalid_name, std::ios_base::out);
-        REQUIRE(!out.is_open());
-        REQUIRE(!out.good());
-        REQUIRE(out.fail());
-        REQUIRE(!out.bad());
-        REQUIRE(!out.eof());
+        REQUIRE(out.is_open());
+        checkGood(out);
     }
 }
 

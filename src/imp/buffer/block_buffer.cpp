@@ -244,6 +244,10 @@ unsigned BlockBuffer::getBlockSize() {
     return max_bytes;
 }
 
+char BlockBuffer::peek() {
+    return buffer[start_byte];
+}
+
 
 BlockBuffer::~BlockBuffer() {}
 

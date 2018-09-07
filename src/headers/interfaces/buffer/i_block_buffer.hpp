@@ -24,6 +24,7 @@ public:
     virtual unsigned read(unsigned num_bytes, char* src) = 0;
     virtual unsigned read(IInputStream &in) = 0;
     virtual unsigned getBlockSize() = 0;
+    virtual char peek() = 0;
     virtual ~IBlockBuffer() { };
 };
 

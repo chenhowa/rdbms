@@ -56,13 +56,16 @@ void MockFileOutputStream::setContent(std::string &s) {
 void MockFileOutputStream::open(const std::string& filename,
             std::fstream::ios_base::openmode openmode) {
     if(good()) {
-        if(is_open_flag || !filesystem->fileExists(filename) ) {
+        if(is_open_flag ) {
             // If already open, operation fails.
-            // If file doesn't exist, operation fails.
             fail_bit = true;
             good_bit = false;
         } else {
-            assert(filesystem->fileExists(filename));
+            // if file does not exist, create it.
+            if(!filesystem->fileExists(filename)) {
+                filesystem->createFile(filename);
+            }
+            
             // open in correct mode.
             is_open_flag = true;
             current_file = &( (*filesystem) [filename] );
@@ -139,11 +142,26 @@ void MockFileOutputStream::close() {
 }
 
 IOutputStream& MockFileOutputStream::put(char c) {
-    if(current_file != nullptr) {
+    if( (current_file != nullptr) && good() ) {
+        //printf("Trying to put char %c in string %s\n", c, current_file->c_str());
+        //printf("\n****FILE CAPACITY IS %u ***\n\n", current_file->capacity());
         if(current_iterator == current_file->end()) {
             // If iterator points to end of file, insert new character
+            *current_file = *current_file + c;
+            current_iterator = std::string::iterator( current_file->end() );
+            
+            /*
+            //printf("Before insert: %c", *current_iterator);
             current_file->insert(current_iterator, c);
+            //printf("After insert: %c in string %s", *current_iterator, current_file->c_str());
+            
+            //printf("\n\n**NOT EQUAL**\n\n");
             current_iterator++;
+            
+            //printf("\n****NEW FILE CAPACITY IS %u ***\n\n", current_file->capacity());
+            */
+            
+            //printf("After increment: %c", *current_iterator);
             assert(current_iterator == current_file->end());
         } else {
             // If not pointing to end of file, simply overwrite existing
@@ -151,6 +169,8 @@ IOutputStream& MockFileOutputStream::put(char c) {
             *current_iterator = c;
             current_iterator++;
         }
+        
+        //printf("Contents of file are now: %s\n", current_file->c_str());
     } else {
         //If no current file, cannot put at all.
         good_bit = false;
@@ -162,37 +182,35 @@ IOutputStream& MockFileOutputStream::put(char c) {
 
 IOutputStream& MockFileOutputStream::write(unsigned n, const char* s) {
     if(current_file != nullptr) {
-        if(current_file != nullptr) {
-            if(current_iterator == current_file->end()) {
-                //If iterator points to end of file, insert characters from c-string
-                // at end.
-                for(unsigned i = 0; i < n; i++) {
-                    current_file->insert(current_iterator, *s);
-                    s++;
-                    current_iterator++;
-                    assert(current_iterator == current_file->end());
-                }
-            } else {
-                // If not pointing to end of file, overwrite existing characters
-                // until reach end of file, and then start inserting.
-                unsigned bytes_remaining = n;
-                while(current_iterator != current_file->end() && bytes_remaining > 0) {
-                    *current_iterator = *s;
-                    s++;
-                    bytes_remaining--;
-                    current_iterator++;
-                }
+        if(current_iterator == current_file->end() && good()) {
+            //If iterator points to end of file, insert characters from c-string
+            // at end.
+            for(unsigned i = 0; i < n; i++) {
+                current_file->insert(current_iterator, *s);
+                s++;
+                current_iterator++;
+                assert(current_iterator == current_file->end());
+            }
+        } else {
+            // If not pointing to end of file, overwrite existing characters
+            // until reach end of file, and then start inserting.
+            unsigned bytes_remaining = n;
+            while(current_iterator != current_file->end() && bytes_remaining > 0) {
+                *current_iterator = *s;
+                s++;
+                bytes_remaining--;
+                current_iterator++;
+            }
+            
+            assert(current_iterator == current_file->end() || n == 0);
+            
+            while(bytes_remaining > 0 && current_iterator == current_file->end() ) {
+                current_file->insert(current_iterator, *s);
+                s++;
+                current_iterator++;
+                bytes_remaining--;
                 
-                assert(current_iterator == current_file->end() || n == 0);
-                
-                while(bytes_remaining > 0 && current_iterator == current_file->end() ) {
-                    current_file->insert(current_iterator, *s);
-                    s++;
-                    current_iterator++;
-                    bytes_remaining--;
-                    
-                    assert(current_iterator == current_file->end() );
-                }
+                assert(current_iterator == current_file->end() );
             }
         }
     } else {

@@ -28,6 +28,7 @@ public:
     virtual unsigned read(unsigned num_bytes, char* src) override;
     virtual unsigned read(IInputStream &in) override;
     virtual ~MockBlockBuffer() { };
+    virtual char peek() override;
     
 public:
     virtual std::string getCharsRead() override;

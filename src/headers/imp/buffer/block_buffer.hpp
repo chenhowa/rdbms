@@ -79,6 +79,8 @@ public:
     
     virtual ~BlockBuffer();
     
+    virtual char peek() override;
+    
 private:
     unsigned calcNumBytesToWrite(unsigned num_bytes);
     void writeStartByte(char* dest);

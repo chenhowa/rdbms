@@ -148,6 +148,7 @@ char MockFileInputStream::get() {
             // If not pointing to end of file, return single
             // char that is being pointed to.
             char c = *current_iterator;
+            //printf("%c", c);
             current_iterator++;
             return c;
         }

@@ -27,6 +27,7 @@ unsigned MockBlockBuffer::write(IBlockBuffer &dest) {
     unsigned bytes_written = 0;
     while(!dest.isFull() && !this->isEmpty() ) {
         dest.read(1, &buffer.front());
+        //printf("%c", buffer.front());
         charsWritten += buffer.front();
         buffer.pop_front();
         bytes_written += 1;
@@ -38,6 +39,7 @@ unsigned MockBlockBuffer::write(unsigned num_bytes, char* dest) {
     unsigned bytes_written = 0;
     while(!isEmpty() && bytes_written < num_bytes) {
         char writeVal = buffer.front();
+        //printf("%c", buffer.front());
         buffer.pop_front();
         dest[bytes_written] = writeVal;
         bytes_written += 1;
@@ -51,6 +53,7 @@ unsigned MockBlockBuffer::write(IOutputStream &out) {
     unsigned bytes_written = 0;
     while(!isEmpty() && out.good()) {
         char writeVal = buffer.front();
+        //printf("%c", buffer.front());
         buffer.pop_front();
         out.put(writeVal);
         bytes_written += 1;
@@ -86,6 +89,10 @@ unsigned MockBlockBuffer::read(IInputStream &in) {
     }
     
     return bytes_read;
+}
+
+char MockBlockBuffer::peek() {
+    return buffer.front();
 }
 
 std::string MockBlockBuffer::getCharsRead() {
