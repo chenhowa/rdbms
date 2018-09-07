@@ -161,6 +161,9 @@ IOutputStream& MockFileOutputStream::put(char c) {
             //printf("\n****NEW FILE CAPACITY IS %u ***\n\n", current_file->capacity());
             */
             
+            //printf("\n****NEW FILE CAPACITY IS %u ***\n\n", current_file->capacity());
+
+            
             //printf("After increment: %c", *current_iterator);
             assert(current_iterator == current_file->end());
         } else {

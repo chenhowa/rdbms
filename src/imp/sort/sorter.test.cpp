@@ -13,6 +13,8 @@ using namespace fruit;
 extern IFileSystem *g_filesystem;
 
 TEST_CASE("Testing initialization ... ") {
+    // printf("Max string size: %u\n\n", std::string().max_size());
+    
     g_filesystem->reset();
     REQUIRE(g_filesystem->fileCount() == 0);
     Injector<IMockFileOutputStreamFactory> out_inj
@@ -334,7 +336,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     }
     
     SECTION("input that overfills buffers a lot") {
-        unsigned numRepeats = 10000;
+        unsigned numRepeats = 1000;
         for(unsigned i = 0; i < numRepeats; i++) {
             input += input_base;
         }
