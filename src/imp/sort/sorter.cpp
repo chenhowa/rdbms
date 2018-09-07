@@ -14,6 +14,7 @@
 #include <cstring>
 #include <cstdio>
 #include "file_manager.hpp"
+#include <queue>
 
 unsigned calcBlockSize() {
     struct stat s;
@@ -97,7 +98,7 @@ unsigned Sorter::getBlockSize() {
 }
 
 void Sorter::sort(IInputStream& in, IOutputStream& out) {
-    std::vector<std::string> files;
+    std::queue<std::string> files;
     
     for(unsigned i = 0; i < getNumWorkers(); i++) {
         assert(workers[i]->isEmpty());
@@ -125,7 +126,7 @@ void Sorter::sort(IInputStream& in, IOutputStream& out) {
     manager->removeTempFiles();
 }
 
-void Sorter::sortInputIntoSortedFiles(IInputStream& in, std::vector<std::string> &files) {
+void Sorter::sortInputIntoSortedFiles(IInputStream& in, std::queue<std::string> &files) {
     unsigned nextWorker = 0;
     while(in.good()) {
         // read in next batch of bytes.
@@ -173,10 +174,10 @@ void Sorter::sortWorker(unsigned workerIndex) {
     delete [] temp;
 }
 
-void Sorter::writeWorkerToNewTempFileAndStore(unsigned workerIndex, std::vector<std::string> &files) {
+void Sorter::writeWorkerToNewTempFileAndStore(unsigned workerIndex, std::queue<std::string> &files) {
     assert(workerIndex < getNumWorkers());
     std::string path = manager->generateName();
-    files.push_back(path);  // stores the filepath for later access to file.    
+    files.push(path);  // stores the filepath for later access to file.    
     IFileOutputStream& writer = *(this->out_streams[workerIndex]);
     IBlockBuffer& worker = *(this->workers[workerIndex]);
     
@@ -189,7 +190,7 @@ void Sorter::writeWorkerToNewTempFileAndStore(unsigned workerIndex, std::vector<
     //printf("\n");
 }
 
-void Sorter::mergeSortedFilesAndWrite(std::vector<std::string> &files, 
+void Sorter::mergeSortedFilesAndWrite(std::queue<std::string> &files, 
                                         IOutputStream &out) {
     //printf("\n***Doing initial merge\n\n");
     doInitialMerge(files);
@@ -210,13 +211,13 @@ void Sorter::mergeSortedFilesAndWrite(std::vector<std::string> &files,
     }
 }
 
-void Sorter::doInitialMerge(std::vector<std::string> &files) {
+void Sorter::doInitialMerge(std::queue<std::string> &files) {
     while(! (files.size() < getNumWorkers())  ) {
         connectDataToWorkers(files, getNumWorkers());
         
         std::string tmp_path = manager->generateName();
         //printf("Writing to temp file %s\n", tmp_path.c_str());
-        files.push_back(tmp_path);
+        files.push(tmp_path);
         this->out_streams[0]->open(tmp_path, std::ios_base::out);
         mergeConnectedWorkersAndWrite( *(this->out_streams[0]) );
         disconnectDataFromWorkers();
@@ -225,13 +226,13 @@ void Sorter::doInitialMerge(std::vector<std::string> &files) {
     }
 }
 
-void Sorter::connectDataToWorkers(std::vector<std::string> &files, 
+void Sorter::connectDataToWorkers(std::queue<std::string> &files, 
                                         unsigned numWorkers) {
     for(unsigned i = 0; i < numWorkers; i++) {
         if(!files.empty()) {
-            this->in_streams[i]->open(files.back(), std::ios_base::in);
-            //printf("Worker %u connected to %s\n", i, files.back().c_str());
-            files.pop_back();
+            this->in_streams[i]->open(files.front(), std::ios_base::in);
+            //printf("Worker %u connected to %s\n", i, files.front().c_str());
+            files.pop();
             assert(this->in_streams[i]->is_open());
             assert(this->in_streams[i]->good());
         }
@@ -375,7 +376,7 @@ void Sorter::disconnectDataFromWorkers() {
     }
 }
 
-void Sorter::doFinalMergeAndWrite(std::vector<std::string> &files,
+void Sorter::doFinalMergeAndWrite(std::queue<std::string> &files,
                                         IOutputStream &out) {
     //printf("\n \nDOING FINAL MERGE \n \n");
     assert(files.size() < getNumWorkers());

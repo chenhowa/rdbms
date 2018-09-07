@@ -334,7 +334,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     }
     
     SECTION("input that overfills buffers a lot") {
-        unsigned numRepeats = 1000;
+        unsigned numRepeats = 10000;
         for(unsigned i = 0; i < numRepeats; i++) {
             input += input_base;
         }

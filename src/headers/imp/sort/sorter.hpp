@@ -10,6 +10,7 @@
 #include "i_file_output_stream.hpp"
 #include <fruit/fruit.h>
 #include <vector>
+#include <queue>
 #include "i_file_manager.hpp"
 
 
@@ -50,17 +51,17 @@ public:
     virtual ~Sorter() { };
 private:
     void writeStageToWorker(unsigned workerIndex);
-    void sortInputIntoSortedFiles(IInputStream& in, std::vector<std::string> &files);
+    void sortInputIntoSortedFiles(IInputStream& in, std::queue<std::string> &files);
     virtual void sortWorker(unsigned workerIndex);
     void writeWorkerToNewTempFileAndStore(unsigned workerIndex,
-                                std::vector<std::string> &files);
-    void mergeSortedFilesAndWrite(std::vector<std::string> &files, 
+                                std::queue<std::string> &files);
+    void mergeSortedFilesAndWrite(std::queue<std::string> &files, 
                                         IOutputStream &out);
-    void doInitialMerge(std::vector<std::string> &files);
-    void connectDataToWorkers(std::vector<std::string> &files, 
+    void doInitialMerge(std::queue<std::string> &files);
+    void connectDataToWorkers(std::queue<std::string> &files, 
                                         unsigned numWorkers);
     void disconnectDataFromWorkers();
-    void doFinalMergeAndWrite(std::vector<std::string> &files,
+    void doFinalMergeAndWrite(std::queue<std::string> &files,
                                         IOutputStream &out);
     void mergeConnectedWorkersAndWrite(IOutputStream &out);
     bool moreDataRemaining();
