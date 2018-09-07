@@ -10,6 +10,9 @@ FileInputStream::FileInputStream():
 
 void FileInputStream::open(const std::string& filename, std::fstream::ios_base::openmode mode) {
     this->input.open(filename, mode);
+    if(is_open() && good()) {
+        name = filename;
+    }
 }
 
 bool FileInputStream::is_open() const {
@@ -64,6 +67,14 @@ FileInputStream::operator bool() const {
 
 void FileInputStream::clear(std::iostream::iostate state) {
     this->input.clear(state);
+}
+
+std::string FileInputStream::get_file_name() {
+    if(is_open()) {
+        return name;
+    }
+    
+    return std::string();
 }
 
 using namespace fruit;

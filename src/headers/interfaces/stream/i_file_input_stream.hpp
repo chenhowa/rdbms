@@ -16,6 +16,7 @@ public:
                 std::fstream::ios_base::openmode mode) = 0;
     virtual bool is_open() const = 0;
     virtual void close() = 0;
+    virtual std::string get_file_name() = 0;
     virtual ~IFileInputStream() { }
 };
 

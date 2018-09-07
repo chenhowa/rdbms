@@ -83,6 +83,9 @@ void MockFileInputStream::open(const std::string& filename,
             good_bit = false;
         } else {
             assert(filesystem->fileExists(filename));
+            // save name
+            name = filename;
+            
             // open in correct mode.
             is_open_flag = true;
             current_file = &( (*filesystem) [filename] );
@@ -261,6 +264,14 @@ void MockFileInputStream::clear(std::iostream::iostate state) {
     bad_bit = false;
     fail_bit = false;
     eof_bit = false;
+}
+
+std::string MockFileInputStream::get_file_name() {
+    if(is_open()) {
+        return name;
+    }
+    
+    return std::string();
 }
 
 IFileSystem* MockFileInputStream::getFileSystem() {

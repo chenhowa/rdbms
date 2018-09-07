@@ -19,6 +19,7 @@ private:
     bool fail_bit;
     bool bad_bit;
     std::ios_base::openmode mode;
+    std::string name;
 public:
     MockFileInputStream();
     MockFileInputStream(IFileSystem* fs);
@@ -41,6 +42,8 @@ public:
     virtual void clear(std::iostream::iostate state) override;
     
     virtual ~MockFileInputStream() { }
+    
+    virtual std::string get_file_name() override;
 public:
     virtual IFileSystem* getFileSystem() override;
     virtual void setFileSystem(IFileSystem *fs) override;

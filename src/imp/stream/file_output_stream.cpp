@@ -57,6 +57,9 @@ void FileOutputStream::clear(std::iostream::iostate state) {
 void FileOutputStream::open(const std::string& filename,
             std::fstream::ios_base::openmode mode) {
     output->open(filename, mode);
+    if(is_open() && good()) {
+        name = filename;
+    }
 }
 
 bool FileOutputStream::is_open() const {
@@ -65,6 +68,14 @@ bool FileOutputStream::is_open() const {
 
 void FileOutputStream::close() {
     output->close();
+}
+
+std::string FileOutputStream::get_file_name() {
+    if(is_open()) {
+        return name;
+    }
+    
+    return std::string();
 }
 
 using namespace fruit;

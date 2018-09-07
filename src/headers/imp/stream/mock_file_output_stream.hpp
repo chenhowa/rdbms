@@ -17,6 +17,7 @@ private:
     bool fail_bit;
     bool bad_bit;
     std::ios_base::openmode mode;
+    std::string name;
     
 public:
     MockFileOutputStream();
@@ -39,7 +40,7 @@ public:
     virtual explicit operator bool() const override;
     // This function will only be used to clear state to GOOD.
     virtual void clear(std::iostream::iostate state = std::iostream::goodbit) override;
-    
+    virtual std::string get_file_name() override;
     
     virtual ~MockFileOutputStream() { };
 

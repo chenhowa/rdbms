@@ -11,6 +11,7 @@
 class FileOutputStream : public IFileOutputStream {
 private:
     std::unique_ptr<std::ofstream> output;
+    std::string name;
 public:
     INJECT( FileOutputStream() );
     virtual IOutputStream& put(char c) override;
@@ -30,7 +31,9 @@ public:
     virtual bool is_open() const override;
     virtual void close() override;
     
-    virtual ~FileOutputStream() { }
+    virtual ~FileOutputStream() { };
+    
+    virtual std::string get_file_name() override;
 };
 
 fruit::Component<IFileOutputStream> getIFileOutputStream();

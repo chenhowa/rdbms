@@ -66,6 +66,9 @@ void MockFileOutputStream::open(const std::string& filename,
                 filesystem->createFile(filename);
             }
             
+            // save name.
+            name = filename;
+            
             // open in correct mode.
             is_open_flag = true;
             current_file = &( (*filesystem) [filename] );
@@ -275,6 +278,14 @@ void MockFileOutputStream::clear(std::iostream::iostate state) {
     bad_bit = false;
     fail_bit = false;
     eof_bit = false;
+}
+
+std::string MockFileOutputStream::get_file_name() {
+    if(is_open()) {
+        return name;
+    }
+    
+    return std::string();
 }
 
 IFileSystem* MockFileOutputStream::getFileSystem() {

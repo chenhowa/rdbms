@@ -15,11 +15,14 @@
 #include <cstdio>
 #include "file_manager.hpp"
 #include <queue>
+#include <boost/log/trivial.hpp>
+
+namespace logging = boost::log;
 
 unsigned calcBlockSize() {
     struct stat s;
     stat("/", &s);
-    //printf("Blocksize: %i\n", (int)s.st_blksize);
+    BOOST_LOG_TRIVIAL(trace) << "Blocksize: " << (int)s.st_blksize;
     return (unsigned)(s.st_blksize);
 }
 
@@ -105,7 +108,7 @@ void Sorter::sort(IInputStream& in, IOutputStream& out) {
         assert(!out_streams[i]->is_open() && out_streams[i]->good());
         assert(!in_streams[i]->is_open() && in_streams[i]->good());
     }
-    //printf("Sorting Input Into Sorted Files\n");
+    BOOST_LOG_TRIVIAL(trace) << "Sorting Input Into Sorted Files\n";
     sortInputIntoSortedFiles(in, files);
     
     for(unsigned i = 0; i < getNumWorkers(); i++) {
@@ -114,7 +117,7 @@ void Sorter::sort(IInputStream& in, IOutputStream& out) {
         assert(!in_streams[i]->is_open() && in_streams[i]->good());
     }
     
-    //printf("Merging sorted files and then writing it\n");
+    BOOST_LOG_TRIVIAL(trace) << "Merging sorted files and then writing it\n";
     mergeSortedFilesAndWrite(files, out);
     
     for(unsigned i = 0; i < getNumWorkers(); i++) {
@@ -123,7 +126,7 @@ void Sorter::sort(IInputStream& in, IOutputStream& out) {
         assert(!in_streams[i]->is_open() && in_streams[i]->good());
     }
     
-    manager->removeTempFiles();
+    //manager->removeTempFiles();
 }
 
 void Sorter::sortInputIntoSortedFiles(IInputStream& in, std::queue<std::string> &files) {
@@ -149,9 +152,9 @@ void Sorter::sortInputIntoSortedFiles(IInputStream& in, std::queue<std::string> 
 
 void Sorter::writeStageToWorker(unsigned workerIndex) {
     assert(workerIndex < getNumWorkers());
-    //printf("Writing stage to worker %u: ", workerIndex);
+    BOOST_LOG_TRIVIAL(trace) << "Writing stage to worker " << workerIndex;
     this->stage->write( *(this->workers[workerIndex]) );
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
     assert(this->stage->isEmpty());
 }
     
@@ -161,9 +164,9 @@ void Sorter::sortWorker(unsigned workerIndex) {
     unsigned size = worker.getBlockSize() + 1;
     char* temp = new char[size];
     memset(temp, '\0', size);
-    //printf("Worker %u : Writing for sort: ", workerIndex);
+    BOOST_LOG_TRIVIAL(trace) << "Worker " << workerIndex << " : Writing for sort: ";
     worker.write(size - 1, temp);
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
     assert(worker.isEmpty());
     std::string string_to_sort(temp);
     std::sort(string_to_sort.begin(), string_to_sort.end());
@@ -181,18 +184,18 @@ void Sorter::writeWorkerToNewTempFileAndStore(unsigned workerIndex, std::queue<s
     IFileOutputStream& writer = *(this->out_streams[workerIndex]);
     IBlockBuffer& worker = *(this->workers[workerIndex]);
     
-    //printf("Worker %u: Writing to temp file %s:", workerIndex, path.c_str());
+    BOOST_LOG_TRIVIAL(trace) << "Worker " << workerIndex << ": Writing to temp file " << path.c_str() << " : ";
     writer.open( path, std::ios_base::out );
     assert(writer.is_open());
     assert(writer.good());
     worker.write( writer );
     writer.close();
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
 }
 
 void Sorter::mergeSortedFilesAndWrite(std::queue<std::string> &files, 
                                         IOutputStream &out) {
-    //printf("\n***Doing initial merge\n\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n***Doing initial merge\n\n";
     doInitialMerge(files);
     
     for(unsigned i = 0; i < getNumWorkers(); i++) {
@@ -201,7 +204,7 @@ void Sorter::mergeSortedFilesAndWrite(std::queue<std::string> &files,
         assert(!in_streams[i]->is_open() && in_streams[i]->good());
     }
     
-    //printf("Doing final merge\n");
+    BOOST_LOG_TRIVIAL(trace) << "Doing final merge\n";
     doFinalMergeAndWrite(files, out);
     
     for(unsigned i = 0; i < getNumWorkers(); i++) {
@@ -216,11 +219,14 @@ void Sorter::doInitialMerge(std::queue<std::string> &files) {
         connectDataToWorkers(files, getNumWorkers());
         
         std::string tmp_path = manager->generateName();
-        //printf("Writing to temp file %s\n", tmp_path.c_str());
-        files.push(tmp_path);
+        BOOST_LOG_TRIVIAL(trace) << "Writing to temp file " << tmp_path.c_str() << " : ";
         this->out_streams[0]->open(tmp_path, std::ios_base::out);
         mergeConnectedWorkersAndWrite( *(this->out_streams[0]) );
         disconnectDataFromWorkers();
+        
+        // Once done writing, push it so it can be read
+        // in the next merge run.
+        files.push(tmp_path);
         
         this->out_streams[0]->close();
     }
@@ -228,10 +234,11 @@ void Sorter::doInitialMerge(std::queue<std::string> &files) {
 
 void Sorter::connectDataToWorkers(std::queue<std::string> &files, 
                                         unsigned numWorkers) {
+    assert(numWorkers <= getNumWorkers() );
     for(unsigned i = 0; i < numWorkers; i++) {
         if(!files.empty()) {
             this->in_streams[i]->open(files.front(), std::ios_base::in);
-            //printf("Worker %u connected to %s\n", i, files.front().c_str());
+            BOOST_LOG_TRIVIAL(trace) << "Worker " << i << " connected to " << files.front().c_str() << "\n";
             files.pop();
             assert(this->in_streams[i]->is_open());
             assert(this->in_streams[i]->good());
@@ -259,24 +266,24 @@ void Sorter::mergeConnectedWorkersAndWrite(IOutputStream &out) {
             writeDataToStage(minData);
             
             if(workers[minData.index]->isEmpty()) {
-                //printf("Reading data to fill empty worker: ");
+                BOOST_LOG_TRIVIAL(trace) << "Reading data to fill empty worker: ";
                 workers[minData.index]->read( *(in_streams[minData.index]) );
-                //printf("\n");
+                BOOST_LOG_TRIVIAL(trace) << "\n";
             }
             
             if(this->stage->isFull()) {
-                //printf("Stage is full. Writing: ");
+                BOOST_LOG_TRIVIAL(trace) << "Stage is full. Writing: ";
                 this->stage->write(out);
                 assert(stage->isEmpty());
-                //printf("\n");
+                BOOST_LOG_TRIVIAL(trace) << "\n";
             }
         }
     }
     
     // If no data is remaining, we must again flush the buffer.
-    //printf("\nflushing stage: ");
+    BOOST_LOG_TRIVIAL(trace) << "\nflushing stage: ";
     this->stage->write(out);
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
     assert(stage->isEmpty());
     
     /*
@@ -311,9 +318,9 @@ bool Sorter::moreDataRemaining() {
 void Sorter::readInputIntoEmptyConnectedWorkers() {
     for(unsigned i = 0; i < getNumWorkers(); i++) {
         if(workers[i]->isEmpty() && in_streams[i]->is_open()) {
-            ////printf("!!!!! Reading data from worker %u: ", i);
+            BOOST_LOG_TRIVIAL(trace) << "!!!!! Reading data from worker " << i;
             workers[i]->read(*(in_streams[i]));
-            //printf("\n");
+            BOOST_LOG_TRIVIAL(trace) << "\n";
         }
     }
 }
@@ -340,7 +347,7 @@ MinData Sorter::findMinWorkerData() {
         candidate = min.val;
         if(!worker.isEmpty()) {
             candidate = worker.peek();
-            //printf("candidate from worker %u: %c\n", i, candidate);
+            BOOST_LOG_TRIVIAL(trace) << "candidate from worker " << i << " : " << candidate << "\n";
         }
         if( candidate < min.val) {
             found = true;
@@ -352,15 +359,15 @@ MinData Sorter::findMinWorkerData() {
     if(!found) {
         throw "Somehow no min was found while merging";
     }
-    //printf("\nMIN FOUND WAS: %c from worker : %u \n", min.val, min.index);
+    BOOST_LOG_TRIVIAL(trace) << "\nMIN FOUND WAS: " << min.val << " from worker : " << min.index << "\n";
     
     return min;
 }
 
 void Sorter::writeDataToStage(MinData data) {
-    //printf("Writing a datum to stage: ");
+    BOOST_LOG_TRIVIAL(trace) << "Writing a datum to stage: ";
     this->workers[data.index]->write(1, &(data.val) );
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
     this->stage->read(1, &(data.val) );
 }
 
@@ -370,15 +377,20 @@ void Sorter::disconnectDataFromWorkers() {
         IFileInputStream& reader = *( in_streams[i] );
         assert(reader);
         if(reader.is_open()) {
-            //printf("Worker %u disconnected\n", i);
+            // If data disconnected, delete the file
+            std::string filename = reader.get_file_name();
+            
+            BOOST_LOG_TRIVIAL(trace) << "Worker " << i << " disconnected\n";
             reader.close();
+            
+            manager->removeFile(filename);
         }
     }
 }
 
 void Sorter::doFinalMergeAndWrite(std::queue<std::string> &files,
                                         IOutputStream &out) {
-    //printf("\n \nDOING FINAL MERGE \n \n");
+    BOOST_LOG_TRIVIAL(trace) << "\n \nDOING FINAL MERGE \n \n";
     assert(files.size() < getNumWorkers());
     connectDataToWorkers(files, files.size());
     mergeConnectedWorkersAndWrite( out );
@@ -387,9 +399,9 @@ void Sorter::doFinalMergeAndWrite(std::queue<std::string> &files,
 }
 
 void Sorter::flushStage(IOutputStream &out) {
-    //printf("flushing stage: ");
+    BOOST_LOG_TRIVIAL(trace) << "flushing stage: ";
     this->stage->write(out);
-    //printf("\n");
+    BOOST_LOG_TRIVIAL(trace) << "\n";
 }
 
 using namespace fruit;

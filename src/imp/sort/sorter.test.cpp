@@ -13,7 +13,7 @@ using namespace fruit;
 extern IFileSystem *g_filesystem;
 
 TEST_CASE("Testing initialization ... ") {
-    // printf("Max string size: %u\n\n", std::string().max_size());
+    //printf("Max string size: %u\n\n", std::string().max_size());
     
     g_filesystem->reset();
     REQUIRE(g_filesystem->fileCount() == 0);
@@ -265,7 +265,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     IFileManager* manager(fm_inj);
     
     unsigned numWorkers = 20;
-    unsigned blocksize = 15;
+    unsigned blocksize = 20;
     
     Sorter sorter(numWorkers, blocksize,
                     buf_fac, in_fac, 
@@ -295,7 +295,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     }
     
     SECTION("input that fills buffers exactly") {
-        unsigned numRepeats = 75;
+        unsigned numRepeats = numWorkers * blocksize / 4;
         for(unsigned i = 0; i < numRepeats; i++) {
             input += input_base;
         }
@@ -315,7 +315,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     }
     
     SECTION("input that overfills buffers barely") {
-        unsigned numRepeats = 76;
+        unsigned numRepeats = (numWorkers * blocksize / 4) + 1;
         for(unsigned i = 0; i < numRepeats; i++) {
             input += input_base;
         }
@@ -336,7 +336,7 @@ TEST_CASE("Sorter, with arbitrarily large number of buffers, "
     }
     
     SECTION("input that overfills buffers a lot") {
-        unsigned numRepeats = 1000;
+        unsigned numRepeats = (100 * numWorkers * blocksize / 4);
         for(unsigned i = 0; i < numRepeats; i++) {
             input += input_base;
         }

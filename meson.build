@@ -1,9 +1,11 @@
 # This is the overall project build
 project('demo-dbms', 'cpp', default_options : ['cpp_std=c++11'])
 
-add_project_arguments('-lfruit', '-I/usr/include/boost_1_67_0', '-Isrc/headers', language: 'cpp')
+add_project_arguments('-lfruit', '-I/usr/include/boost_1_67_0', '-Isrc/headers', 
+                        '-DBOOST_LOG_DYN_LINK', language: 'cpp')
 add_project_link_arguments(  '-L/usr/include/boost_1_67_0/stage/lib',
-                            '-lboost_system', '-lboost_filesystem',
+                            '-lboost_system', '-lboost_filesystem', 
+                            '-lboost_log', '-lpthread',
                             '-lfruit', language: 'cpp')
 
 subdir('src')

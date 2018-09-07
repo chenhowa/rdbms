@@ -13,6 +13,7 @@
 class FileInputStream : public IFileInputStream {
 private:
     std::fstream input;
+    std::string name;
 
 public:
     INJECT(FileInputStream() );
@@ -31,6 +32,7 @@ public:
     virtual bool operator! () const override;
     virtual explicit operator bool() const override;
     virtual void clear(std::iostream::iostate state) override;
+    virtual std::string get_file_name() override;
     
 };
 
